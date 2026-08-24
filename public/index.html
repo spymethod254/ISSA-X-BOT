@@ -1,0 +1,14 @@
+<!DOCTYPE html><html><body style="font-family:sans-serif;text-align:center;padding:50px">
+<h1>GWIJITECH MD - Multi Session</h1>
+<input id="num" placeholder="2547XXXXXXXX" style="padding:10px;width:200px">
+<button onclick="pair()" style="padding:10px">Get Code</button>
+<h2 id="result"></h2>
+<script>
+async function pair(){
+  let n=document.getElementById('num').value
+  let r=await fetch('/pair?number='+n)
+  let j=await r.json()
+  document.getElementById('result').innerText= j.pairing_code? 'Code: '+j.pairing_code : JSON.stringify(j)
+}
+</script>
+</body></html>

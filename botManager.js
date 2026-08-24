@@ -11,14 +11,21 @@ const bots = new Map()
 const commands = new Map()
 
 // Load all commands
+const commands = new Map()
 function loadCommands() {
     const commandsPath = path.join(__dirname, 'commands')
     if (!fs.existsSync(commandsPath)) return
     const files = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'))
     for (const file of files) {
         import(`./commands/${file}`).then(mod => {
-            const cmd = mod.default || mod
-            if (cmd.name) commands.set(cmd.name, cmd)
+            const list = mod.default? (Array.isArray(mod.default)? mod.default : [mod.default]) : Object.values(mod)
+            for(const cmd of list) {
+                if(cmd?.name) {
+                    commands.set(cmd.name, cmd)
+                    if(cmd.aliases) cmd.aliases.forEach(a => commands.set(a, cmd))
+                    console.log(`Loaded: ${cmd.name}`)
+                }
+            }
         })
     }
 }

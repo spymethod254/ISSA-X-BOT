@@ -1,0 +1,1 @@
+export function showMenu() { return '*GWIJITECH MD*\n.ping\n.menu' }

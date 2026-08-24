@@ -1,17 +1,17 @@
 export default {
-    name: 'menu',
-    execute: async (sock, m) => {
-        const menu = `
-*╭─── ISSA X ULTRA ───╮*
-*│*.ping - check bot
-*│*.menu - this menu
-*│*.alive - bot status
-*│*.owner - owner contact
-*│*.ai <text> - chatgpt
-*│*.sticker - image to sticker
-*╰──────────────────╯*
-_100% Multi-Session Backend Only_
+ name: 'menu', aliases: ['help'],
+ execute: async (sock,m) => {
+  const txt = `
+*╭━━━ ISSA X ULTRA ━━━╮*
+*┃*.ping.alive.menu.owner
+*┃* *STICKER:*.sticker.toimg
+*┃* *GROUP:*.tagall.hidetag.kick.add.promote.demote.group open/close.link
+*┃* *FUN:*.joke.quote.ship.8ball
+*┃* *MEDIA:*.play.tiktok
+*┃* *TOOLS:*.calc 2+2.weather Mombasa.ai
+*╰━━━━━━━━━━━━━━━━━━━━╯*
+_Total Commands: ${sock.commandsCount || 30} | Multi-Session ✅_
 `
-        await sock.sendMessage(m.key.remoteJid, { text: menu }, { quoted: m })
-    }
+  await sock.sendMessage(m.key.remoteJid, {text: txt}, {quoted:m})
+ }
 }

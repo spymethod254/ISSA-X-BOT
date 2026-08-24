@@ -1,3 +1,5 @@
+import config from '../config.js'
+
 export async function welcomeHandler(sock) {
     sock.ev.on('group-participants.update', async (update) => {
         const { id, participants, action } = update
@@ -12,7 +14,7 @@ export async function welcomeHandler(sock) {
                 if(action === 'add') {
                     await sock.sendMessage(id, {
                         image: pp? { url: pp } : undefined,
-                        caption: `*WELCOME TO ${groupName}* 🎉\n\nHello @${user.split('@')[0]}!\n\nRead group description & enjoy!\n\nType.menu to see commands\n\n_GWIJITECH MD_`,
+                        caption: `*WELCOME TO ${groupName}* 🎉\nHello @${user.split('@')[0]}!\n\nBot: ${config.botName}\nOwner: ${config.ownerName}\n\nType ${config.prefix}menu`,
                         mentions: [user]
                     })
                 }

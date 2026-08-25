@@ -1,26 +1,39 @@
 import express from 'express'
-import { createBot, getBot } from '../botManager.js'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import pino from 'pino'
+import makeWASocket, { useMultiFileAuthState, makeCacheableSignalKeyStore, Browsers } from '@whiskeysockets/baileys'
+
 const router = express.Router()
+const logger = pino({ level: 'silent' })
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
-router.get('/', async (req,res) => {
-    let number = req.query.number?.replace(/[^0-9]/g,'')
-    if(!number) return res.json({ error: 'Use /pair?number=2547XXXXXXXX' })
+const SESSIONS_DIR = process.env.SESSIONS_DIR || (fs.existsSync('/app') ? '/app/sessions' : path.join(__dirname, '../sessions'))
 
-    try {
-        let sock = getBot(number)
-        if(!sock) sock = await createBot(number)
+router.all('/', async (req, res) => {
+  let num = (req.query.number || req.body?.number || '').replace(/[^0-9]/g,'')
+  console.log("Pair req:", num)
+  if(!num) return res.json({error:"Enter number"})
 
-        // Wait 3s for socket to init
-        await new Promise(r => setTimeout(r, 3000))
-
-        if(sock.authState.creds.registered) {
-            return res.json({ success: true, message: 'Already connected', number })
-        }
-
-        const code = await sock.requestPairingCode(number)
-        res.json({ success: true, number, pairing_code: code, instruction: 'WhatsApp > Linked Devices > Link with phone number' })
-    } catch(e) {
-        res.json({ error: e.message })
-    }
+  try{
+    const { state, saveCreds } = await useMultiFileAuthState(path.join(SESSIONS_DIR, num))
+    const sock = makeWASocket({
+      auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, logger) },
+      printQRInTerminal: false,
+      logger,
+      browser: Browsers.ubuntu("Chrome"),
+      usePairingCode: true
+    })
+    sock.ev.on('creds.update', saveCreds)
+    await new Promise(r=>setTimeout(r,3000))
+    const code = await sock.requestPairingCode(num)
+    console.log(`✅ ${num} => ${code}`)
+    res.json({ code })
+  }catch(e){
+    console.log(e)
+    res.json({error: e.message})
+  }
 })
 export default router

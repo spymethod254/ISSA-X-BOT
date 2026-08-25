@@ -56,10 +56,13 @@ POWERED BY ISSA X ULTRA
 
 <p align="center">
   <a href="https://whatsapp.com/channel/0029Vb8TKun8KMqsPz38Li38">
-    <img src="https://img.shields.io/badge/WhatsApp%20Channel-Multi%20Device-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
+    <img src="https://img.shields.io/badge/WHATSAPP%20CHANNEL-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
   </a>
+</p>
+
+<p align="center">
   <a href="https://whatsapp.com/channel/0029Vb8TKun8KMqsPz38Li38">
-    <img src="https://img.shields.io/badge/ISSA%20TACH%20%E2%9C%85-JOIN%20NOW-000000?style=for-the-badge&logo=whatsapp&logoColor=white" />
+    <img src="https://img.shields.io/badge/ISSA%20TACH%20✅-JOIN%20NOW-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
   </a>
 </p>
 

@@ -16,11 +16,23 @@
 
 ---
 
-### 🔗 Pair Your WhatsApp
-🌐 Live: `https://issa-x-bot-production.up.railway.app`
-1. Open link
-2. Enter `2547XXXXXXXX`
-3. Get code > Linked Devices > Link with phone number
+<div align="center">
+
+### 🔗 ISSA X ULTRA PAIR
+
+<a href="https://issa-x-bot-production.up.railway.app">
+  <img src="https://i.ibb.co/7JbQ0kY4/pair-button.png" width="250"/>
+</a>
+
+<br>
+
+<a href="https://issa-x-bot-production.up.railway.app">
+  <img src="https://img.shields.io/badge/Click_Here_To_Pair-000000?style=for-the-badge&logo=whatsapp&logoColor=white&color=8A2BE2" />
+</a>
+
+**1.** Tap button **2.** Enter number **3.** Enter code in WhatsApp
+
+</div>
 
 ---
 

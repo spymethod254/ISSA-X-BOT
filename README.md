@@ -62,7 +62,19 @@
 
 ---
 
-### 👑 Owner
+### 🚀 Deploy Your Own (Recommended)
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/github)
+
+1. Fork this repo
+2. Deploy to Railway
+3. Add Volume: `/app/sessions` in Railway dashboard
+4. Add Variable: `SESSIONS_DIR=/app/sessions`
+5. You get your own pair link - share that!
+
+---
+
+### 👑 Developers
 POWERED BY ISSA X ULTRA
 © 2026 Made with GWIJITECH Kenya 🇰🇪
 

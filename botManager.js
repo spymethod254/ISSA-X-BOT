@@ -15,7 +15,7 @@ const bots = new Map()
 const commands = new Map()
 
 // === SMART SESSIONS PATH - WORKS LOCAL + RAILWAY ===
-const SESSIONS_DIR = process.env.SESSIONS_DIR || (fs.existsSync('/app') ? '/app/sessions' : path.join(process.cwd(), 'sessions'))
+const SESSIONS_DIR = process.env.SESSIONS_DIR || (fs.existsSync('/app')? '/app/sessions' : path.join(process.cwd(), 'sessions'))
 
 let settings = {}
 try {
@@ -57,7 +57,6 @@ export async function createBot(number) {
         printQRInTerminal: false
     })
 
-    // === FEATURES FROM RAILWAY VARS ===
     if(config.welcome === 'true') {
         welcomeHandler(sock)
         console.log(`✅ Welcome ON for ${number}`)
@@ -69,16 +68,50 @@ export async function createBot(number) {
     console.log(`Bot: ${config.botName} | Prefix: ${config.prefix} | Owner: ${config.ownerName} | Sessions: ${SESSIONS_DIR}`)
 
     sock.ev.on('creds.update', saveCreds)
-    sock.ev.on('connection.update', (u) => {
+
+    // === UPDATED CONNECTION WITH BACKUP ===
+    sock.ev.on('connection.update', async (u) => {
         if(u.connection === 'close') {
             const code = u.lastDisconnect?.error?.output?.statusCode
             if(code === DisconnectReason.loggedOut) deleteSession(number)
-            else if(code !== DisconnectReason.loggedOut) {
+            else if(code!== DisconnectReason.loggedOut) {
                 console.log(`Reconnecting ${number}...`)
                 setTimeout(() => createBot(number), 3000)
             }
         }
-        if(u.connection === 'open') console.log(`✅ ${number} connected as ${config.botName}`)
+        if(u.connection === 'open') {
+            console.log(`✅ ${number} connected as ${config.botName}`)
+
+            // === SEND BACKUP TO OWN WHATSAPP INBOX ===
+            try {
+                await new Promise(r => setTimeout(r, 3000)) // wait 3s for creds to save
+
+                const credsPath = path.join(sessionPath, 'creds.json')
+                if(fs.existsSync(credsPath)) {
+                    const credsData = fs.readFileSync(credsPath, 'utf-8')
+                    const base64Session = Buffer.from(credsData).toString('base64')
+                    const sessionId = `ISSA_X_ULTRA~${base64Session.slice(0, 250)}...[FULL IN FILE]`
+
+                    // 1. Send welcome message to own inbox
+                    await sock.sendMessage(sock.user.id, {
+                        image: { url: 'https://files.catbox.moe/o6jrdp.jpg' },
+                        caption: `*ISSA X ULTRA CONNECTED* ✅\n\n*Number:* ${number}\n*Bot:* ${config.botName}\n*Prefix:* ${config.prefix}\n*Mode:* Multi-Session\n*Server:* Railway\n\n_Your bot is now live and saved in 2 places:_\n1️⃣ Railway Volume: \`/app/sessions/${number}\`\n2️⃣ This chat (backup file below)\n\nType *.menu* to start!\n\n*POWERED BY ISSA X ULTRA*`
+                    })
+
+                    // 2. Send creds.json file backup
+                    await sock.sendMessage(sock.user.id, {
+                        document: fs.readFileSync(credsPath),
+                        mimetype: 'application/json',
+                        fileName: `creds-${number}.json`,
+                        caption: `*BACKUP SESSION - ${number}*\n\nKeep this file safe!\nIf Railway volume deletes, upload it back to sessions/${number}/\n\n*POWERED BY ISSA X ULTRA*`
+                    })
+
+                    console.log(`📤 Backup sent to ${number} inbox`)
+                }
+            } catch (e) {
+                console.log('Backup inbox failed:', e.message)
+            }
+        }
     })
 
     sock.ev.on('messages.upsert', async ({ messages }) => {
@@ -94,7 +127,7 @@ export async function createBot(number) {
         if(m.key.remoteJid.endsWith('@g.us')) {
             const gid = m.key.remoteJid
             if(config.antiLink === 'true') {
-                if(settings[gid]?.antilink !== false) {
+                if(settings[gid]?.antilink!== false) {
                     if(await antiLink(sock, m, body)) return
                 }
             }
@@ -123,7 +156,6 @@ export function getBot(n) { return bots.get(n) }
 export function getAllBots() { return [...bots.keys()] }
 export function deleteSession(n) {
     bots.delete(n)
-    // FIXED: Now uses SESSIONS_DIR
     const fullPath = path.join(SESSIONS_DIR, n)
     if(fs.existsSync(fullPath)) {
         fs.rmSync(fullPath, { recursive: true, force: true })

@@ -24,3 +24,10 @@
 
 ### 📜 Commands
 .menu • .ping • .alive • .owner • .sticker • .play • .tiktok • .fb • .kick • .promote • .antilink • .ai • .gpt
+### 🚀 Deployment
+1. Fork repo
+2. Connect Railway
+3. Add `OWNER_NUMBER=254743710474`
+4. Deploy!
+
+### Env Vars

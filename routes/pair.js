@@ -3,78 +3,120 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import pino from 'pino'
-import makeWASocket, { useMultiFileAuthState, makeCacheableSignalKeyStore, Browsers, delay } from '@whiskeysockets/baileys'
+import NodeCache from 'node-cache'
+import makeWASocket, { 
+  useMultiFileAuthState, 
+  makeCacheableSignalKeyStore, 
+  Browsers, 
+  delay 
+} from '@whiskeysockets/baileys'
 
 const router = express.Router()
-const logger = pino({ level: 'silent' })
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const SESSIONS_DIR = process.env.SESSIONS_DIR || (fs.existsSync('/app') ? '/app/sessions' : path.join(__dirname, '../sessions'))
 
-const sessions = new Map() // number -> { sock, code }
+// Railway persistent path
+const SESSIONS_DIR = process.env.SESSIONS_DIR || (fs.existsSync('/app') ? '/app/sessions' : path.join(__dirname, '../sessions'))
+if (!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true })
+
+const logger = pino({ level: 'silent' })
+const msgRetryCounterCache = new NodeCache()
+const activeSessions = new Map() // number -> { sock, code, time }
 
 router.all('/', async (req, res) => {
-  let num = (req.query.number || req.body?.number || '').replace(/[^0-9]/g,'')
-  if(!num) return res.json({error:"Enter number e.g 2547xxxxxxx"})
+  let num = (req.query.number || req.body?.number || '').replace(/[^0-9]/g, '')
+  
+  if (!num || num.length < 10) {
+    return res.status(400).json({ error: "Enter valid number with country code, e.g 2547xxxxxxx" })
+  }
 
-  // Prevent spam
-  if(sessions.has(num)){
-    const old = sessions.get(num)
-    if(Date.now() - old.time < 60000){
-      return res.json({ code: old.code, message: "Use this code, don't request again!" })
+  // Anti-spam: 1 code per minute
+  if (activeSessions.has(num)) {
+    const old = activeSessions.get(num)
+    if (Date.now() - old.time < 60000) {
+      return res.json({ code: old.code, message: "Use that code! Don't request again" })
     }
   }
 
-  try{
-    const dir = path.join(SESSIONS_DIR, num)
-    if(fs.existsSync(dir)) fs.rmSync(dir, {recursive:true, force:true})
+  const sessionDir = path.join(SESSIONS_DIR, num)
 
-    const { state, saveCreds } = await useMultiFileAuthState(dir)
+  try {
+    // If old session exists and is already registered, delete it to allow re-pair
+    if (fs.existsSync(sessionDir)) {
+      const credsPath = path.join(sessionDir, 'creds.json')
+      if (fs.existsSync(credsPath)) {
+        try {
+          const creds = JSON.parse(fs.readFileSync(credsPath, 'utf8'))
+          if (creds.registered) {
+            console.log(`♻️ Old session found for ${num}, deleting for re-pair`)
+            fs.rmSync(sessionDir, { recursive: true, force: true })
+          }
+        } catch {}
+      }
+    }
+
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
+
     const sock = makeWASocket({
-      auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, logger) },
-      printQRInTerminal: false,
+      auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(state.keys, logger)
+      },
       logger,
-      browser: Browsers.macOS("Chrome"),
+      printQRInTerminal: false,
+      browser: Browsers.macOS("Safari"),
+      msgRetryCounterCache,
       usePairingCode: true
     })
 
     sock.ev.on('creds.update', saveCreds)
-    
-    sock.ev.on('connection.update', async (u)=>{
-      const { connection } = u
-      if(connection === 'open'){
-        console.log(`✅ ${num} PAIRED SUCCESS`)
-        sessions.delete(num)
-        // Start your bot here
+
+    sock.ev.on('connection.update', async (update) => {
+      const { connection } = update
+      if (connection === 'open') {
+        console.log(`✅ SUCCESSFULLY PAIRED: ${num}`)
+        // HERE START YOUR BOT LOGIC - load your handlers
+        // await startBot(sock, num) 
+        activeSessions.delete(num)
       }
-      if(connection === 'close'){
-        sessions.delete(num)
+      if (connection === 'close') {
+        activeSessions.delete(num)
       }
     })
 
-    await delay(3500)
+    await delay(3000)
 
-    if(state.creds.registered){
-      return res.json({error:"Number already linked, delete session first"})
+    // Double check after delay
+    if (state.creds.registered) {
+       fs.rmSync(sessionDir, { recursive: true, force: true })
+       return res.json({ error: "Number was already linked. Old session deleted, please request code again now!" })
     }
 
     const code = await sock.requestPairingCode(num)
-    console.log(`🔑 CODE FOR ${num}: ${code}`)
-    
-    sessions.set(num, { sock, code, time: Date.now() })
+    const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code
 
-    // Keep alive for 90s
-    setTimeout(()=>{ 
-      try{ if(!sock.authState.creds.registered) sock.end() }catch{}
-      sessions.delete(num)
-    }, 90000)
+    console.log(`🔑 CODE FOR ${num}: ${formattedCode}`)
+    activeSessions.set(num, { sock, code: formattedCode, time: Date.now() })
 
-    return res.json({ code })
+    // Auto-close socket after 120 seconds to save RAM
+    setTimeout(() => {
+      try {
+        if (!sock.authState.creds.registered) {
+          sock.end()
+          if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true })
+          console.log(`⏰ Session timeout for ${num}`)
+        }
+      } catch {}
+      activeSessions.delete(num)
+    }, 120000)
 
-  }catch(e){
-    console.error("PAIR ERROR:", e.message)
-    sessions.delete(num)
-    return res.json({error:"Failed. Wait 3 mins, update WhatsApp, try again. Don't spam!"})
+    return res.json({ code: formattedCode })
+
+  } catch (err) {
+    console.error("PAIR ERROR:", err.message)
+    if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true })
+    activeSessions.delete(num)
+    return res.status(503).json({ error: "Failed to get code. Wait 2 minutes, update WhatsApp to latest version, then try again." })
   }
 })
 

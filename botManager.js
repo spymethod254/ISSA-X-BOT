@@ -16,15 +16,15 @@ const bots = new Map()
 const commands = new Map()
 
 // === RAILWAY SAFE PATH ===
-const SESSIONS_DIR = process.env.SESSIONS_DIR || (fs.existsSync('/app') ? '/app/sessions' : path.join(process.cwd(), 'sessions'))
-if(!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true })
+const SESSIONS_DIR = process.env.SESSIONS_DIR || '/app/sessions'
+const DATA_DIR = path.join(SESSIONS_DIR, '..', 'data') // separate data
 
-const logger = pino({ level: 'silent' })
-const msgRetryCounterCache = new NodeCache()
+if(!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true })
+if(!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true })
 
 let settings = {}
 try {
-    const p = path.join(SESSIONS_DIR, 'settings.json')
+    const p = path.join(DATA_DIR, 'settings.json') // NOT inside sessions
     if(fs.existsSync(p)) settings = JSON.parse(fs.readFileSync(p, 'utf8'))
 } catch { settings = {} }
 

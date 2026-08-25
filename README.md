@@ -52,8 +52,7 @@
 
 ### 👑 Owner
 POWERED BY ISSA X ULTRA
-© 2026 GWIJITECH MD
-Made with GWIJITECH Kenya 🇰🇪
+© 2026 Made with GWIJITECH Kenya 🇰🇪
 
 <p align="center">
   <a href="https://whatsapp.com/channel/0029Vb8TKun8KMqsPz38Li38">
@@ -86,4 +85,3 @@ OWNER_NUMBER=254743710474
 BOT_NAME=ISSA X ULTRA
 PREFIX=.
 SESSION_ID= (auto-generated)
----

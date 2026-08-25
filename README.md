@@ -56,11 +56,11 @@
 OWNER_NUMBER=254743710474
 BOT_NAME=ISSA X ULTRA
 PREFIX=.
-SESSION_ID= (auto-generated)```
+SESSION_ID= (auto-generated)
 
 ---
 
-### 👑 Owner
+#### 👑 Owner
 POWERED BY ISSA X ULTRA
 © 2026 GWIJITECH MD
 Made with ❤️ in Kenya 🇰🇪

@@ -21,13 +21,13 @@
 ### 🔗 ISSA X ULTRA PAIR
 
 <a href="https://issa-x-bot-production.up.railway.app">
-  <img src="https://i.ibb.co/7JbQ0kY4/pair-button.png" width="250"/>
+  <img src="https://img.shields.io/badge/PAIR%20NOW-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
 </a>
 
 <br>
 
 <a href="https://issa-x-bot-production.up.railway.app">
-  <img src="https://img.shields.io/badge/Click_Here_To_Pair-000000?style=for-the-badge&logo=whatsapp&logoColor=white&color=8A2BE2" />
+  <img src="https://img.shields.io/badge/CLICK%20HERE%20TO%20PAIR-8A2BE2?style=for-the-badge&logo=link&logoColor=white" />
 </a>
 
 **1.** Tap button **2.** Enter number **3.** Enter code in WhatsApp

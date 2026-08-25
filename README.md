@@ -56,7 +56,7 @@
 OWNER_NUMBER=254743710474
 BOT_NAME=ISSA X ULTRA
 PREFIX=.
-SESSION_ID= (auto-generated)
+SESSION_ID= (auto-generated)```
 
 ---
 
@@ -71,3 +71,5 @@ For educational purposes only.
 
 ### ⭐ Star this repo!
 GWIJITECH MD — 2026
+
+---

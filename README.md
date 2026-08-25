@@ -60,14 +60,19 @@ SESSION_ID= (auto-generated)
 
 ---
 
-#### 👑 Owner
+### 👑 Owner
 POWERED BY ISSA X ULTRA
 © 2026 GWIJITECH MD
 Made with ❤️ in Kenya 🇰🇪
 WhatsApp: wa.me/254743710474
 
+---
+
+
 ### ⚠️ Disclaimer
 For educational purposes only.
+
+---
 
 ### ⭐ Star this repo!
 GWIJITECH MD — 2026

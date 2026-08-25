@@ -53,11 +53,18 @@
 ### 👑 Owner
 POWERED BY ISSA X ULTRA
 © 2026 GWIJITECH MD
-Made with ❤️ in Kenya 🇰🇪
+Made with GWIJITECH Kenya 🇰🇪
 
 <p align="center">
-  <img src="https://img.shields.io/badge/WhatsApp%20Channel-Multi%20Device-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
+  <a href="https://whatsapp.com/channel/0029Vb8TKun8KMqsPz38Li38">
+    <img src="https://img.shields.io/badge/WhatsApp%20Channel-Multi%20Device-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
+  </a>
+  <a href="https://whatsapp.com/channel/0029Vb8TKun8KMqsPz38Li38">
+    <img src="https://img.shields.io/badge/ISSA%20TACH%20%E2%9C%85-JOIN%20NOW-000000?style=for-the-badge&logo=whatsapp&logoColor=white" />
+  </a>
 </p>
+
+> **Follow the ISSA TACH🤖🤖 channel on WhatsApp:** https://whatsapp.com/channel/0029Vb8TKun8KMqsPz38Li38
 
 ---
 
@@ -79,3 +86,4 @@ OWNER_NUMBER=254743710474
 BOT_NAME=ISSA X ULTRA
 PREFIX=.
 SESSION_ID= (auto-generated)
+---

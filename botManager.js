@@ -1,3 +1,4 @@
+import config from './config.js'
 import makeWASocket, { useMultiFileAuthState, Browsers, DisconnectReason } from '@whiskeysockets/baileys'
 import pino from 'pino'
 import fs from 'fs'
@@ -52,50 +53,67 @@ export async function createBot(number) {
         printQRInTerminal: false
     })
 
-    // Activate all features
-    welcomeHandler(sock)
-    statusHandler(sock)
-    console.log(`Features enabled for ${number}: welcome, anti-link, status view`)
+    // === FEATURES FROM RAILWAY VARS ===
+    if(config.welcome === 'true') {
+        welcomeHandler(sock)
+        console.log(`✅ Welcome ON for ${number}`)
+    }
+    if(config.autoViewStatus === 'true') {
+        statusHandler(sock)
+        console.log(`✅ Auto View Status ON for ${number}`)
+    }
+    console.log(`Bot: ${config.botName} | Prefix: ${config.prefix} | Owner: ${config.ownerName}`)
 
     sock.ev.on('creds.update', saveCreds)
     sock.ev.on('connection.update', (u) => {
         if(u.connection === 'close') {
             const code = u.lastDisconnect?.error?.output?.statusCode
             if(code === DisconnectReason.loggedOut) deleteSession(number)
-            else if(code!== DisconnectReason.loggedOut) {
+            else if(code !== DisconnectReason.loggedOut) {
                 console.log(`Reconnecting ${number}...`)
                 setTimeout(() => createBot(number), 3000)
             }
         }
-        if(u.connection === 'open') console.log(`✅ ${number} connected`)
+        if(u.connection === 'open') console.log(`✅ ${number} connected as ${config.botName}`)
     })
 
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const m = messages[0]
         if(!m.message || m.key.fromMe) return
-
-        // Ignore status
         if(m.key.remoteJid === 'status@broadcast') return
+
+        // Auto Read & Auto Typing from config
+        if(config.autoRead === 'true') await sock.readMessages([m.key])
+        if(config.autoTyping === 'true') await sock.sendPresenceUpdate('composing', m.key.remoteJid)
 
         const body = m.message.conversation || m.message.extendedTextMessage?.text || m.message.imageMessage?.caption || ''
 
-        // ANTI-FEATURES CHECK (only in groups)
+        // ANTI-FEATURES CHECK (from config + per-group settings)
         if(m.key.remoteJid.endsWith('@g.us')) {
             const gid = m.key.remoteJid
-            if(settings[gid]?.antilink!== false) {
-                if(await antiLink(sock, m, body)) return
+            
+            // Global ANTI_LINK from Railway
+            if(config.antiLink === 'true') {
+                // Check per-group override
+                if(settings[gid]?.antilink !== false) {
+                    if(await antiLink(sock, m, body)) return
+                }
             }
-            if(await antiSpam(sock, m)) return
+            // Global ANTI_SPAM
+            if(config.antiSpam === 'true') {
+                if(await antiSpam(sock, m)) return
+            }
         }
 
-        const prefix = '.'
+        // PREFIX from config.js (Railway)
+        const prefix = config.prefix
         if(!body.startsWith(prefix)) return
 
         const args = body.slice(1).trim().split(/ +/)
         const cmdName = args.shift().toLowerCase()
         const cmd = commands.get(cmdName)
         if(cmd) {
-            try { await cmd.execute(sock, m, args) }
+            try { await cmd.execute(sock, m, args, config) }
             catch(e) { console.log(`Error in ${cmdName}:`, e) }
         }
     })

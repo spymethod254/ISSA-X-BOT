@@ -14,7 +14,6 @@
 
 > **The most powerful WhatsApp MD bot with 30+ commands, anti-link, auto-view, and lightning-fast pairing.**
 
----
 
 ### 🔗 Pair Your WhatsApp
 
@@ -25,7 +24,6 @@
 3. Click **Get Pair Code**
 4. WhatsApp > Linked Devices > Link with phone number > Paste code
 
----
 
 ### ✨ Features
 
@@ -38,7 +36,6 @@
 | 🔒 **Secure** | No auth files exposed |
 | 🌙 **24/7 Online** | Hosted on Railway |
 
----
 
 ### 📜 Commands List
 
@@ -46,7 +43,6 @@
 .fb • .insta • .kick • .promote • .demote • .antilink • .autoview
 .ai • .gpt • .imagine • .weather • .news • and 20+ more!
 
----
 
 ### 🚀 Deployment
 
@@ -66,7 +62,6 @@ OWNER_NUMBER=254743710474
 BOT_NAME=ISSA X ULTRA
 PREFIX=.
 SESSION_ID= (auto-generated)
----
 
 ### 👑 Owner & Credits
 
@@ -80,8 +75,6 @@ SESSION_ID= (auto-generated)
 - *WhatsApp:* https://wa.me/254743710474?text=Hi%20GWIJITECH%20MD%20👋
 - *Bot Name:* ISSA X ULTRA
 
----
-
 ### 📞 Contact Support
 
 <p align="center">
@@ -89,13 +82,11 @@ SESSION_ID= (auto-generated)
   <a href="https://github.com"><img src="https://img.shields.io/badge/GitHub-Follow-000000?style=for-the-badge&logo=github&logoColor=white" /></a>
 </p>
 
----
 
 ### ⚠️ Disclaimer
 
 This bot is made for educational purposes. We are not responsible for any bans. Use at your own risk. Do not spam.
 
----
 
 ### ⭐ Don't forget to star this repo!
 

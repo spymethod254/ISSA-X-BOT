@@ -13,11 +13,15 @@ const __dirname = path.dirname(__filename)
 
 const bots = new Map()
 const commands = new Map()
-let settings = {}
 
+// === SMART SESSIONS PATH - WORKS LOCAL + RAILWAY ===
+const SESSIONS_DIR = process.env.SESSIONS_DIR || (fs.existsSync('/app') ? '/app/sessions' : path.join(process.cwd(), 'sessions'))
+
+let settings = {}
 try {
-    if(fs.existsSync('/app/sessions/settings.json')) {
-        settings = JSON.parse(fs.readFileSync('/app/sessions/settings.json', 'utf8'))
+    const settingsPath = path.join(SESSIONS_DIR, 'settings.json')
+    if(fs.existsSync(settingsPath)) {
+        settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'))
     }
 } catch { settings = {} }
 
@@ -42,7 +46,7 @@ function loadCommands() {
 loadCommands()
 
 export async function createBot(number) {
-    const sessionPath = `/app/sessions/${number}`
+    const sessionPath = path.join(SESSIONS_DIR, number)
     if(!fs.existsSync(sessionPath)) fs.mkdirSync(sessionPath, { recursive: true })
 
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath)
@@ -62,7 +66,7 @@ export async function createBot(number) {
         statusHandler(sock)
         console.log(`✅ Auto View Status ON for ${number}`)
     }
-    console.log(`Bot: ${config.botName} | Prefix: ${config.prefix} | Owner: ${config.ownerName}`)
+    console.log(`Bot: ${config.botName} | Prefix: ${config.prefix} | Owner: ${config.ownerName} | Sessions: ${SESSIONS_DIR}`)
 
     sock.ev.on('creds.update', saveCreds)
     sock.ev.on('connection.update', (u) => {
@@ -82,30 +86,23 @@ export async function createBot(number) {
         if(!m.message || m.key.fromMe) return
         if(m.key.remoteJid === 'status@broadcast') return
 
-        // Auto Read & Auto Typing from config
         if(config.autoRead === 'true') await sock.readMessages([m.key])
         if(config.autoTyping === 'true') await sock.sendPresenceUpdate('composing', m.key.remoteJid)
 
         const body = m.message.conversation || m.message.extendedTextMessage?.text || m.message.imageMessage?.caption || ''
 
-        // ANTI-FEATURES CHECK (from config + per-group settings)
         if(m.key.remoteJid.endsWith('@g.us')) {
             const gid = m.key.remoteJid
-            
-            // Global ANTI_LINK from Railway
             if(config.antiLink === 'true') {
-                // Check per-group override
                 if(settings[gid]?.antilink !== false) {
                     if(await antiLink(sock, m, body)) return
                 }
             }
-            // Global ANTI_SPAM
             if(config.antiSpam === 'true') {
                 if(await antiSpam(sock, m)) return
             }
         }
 
-        // PREFIX from config.js (Railway)
         const prefix = config.prefix
         if(!body.startsWith(prefix)) return
 
@@ -126,5 +123,10 @@ export function getBot(n) { return bots.get(n) }
 export function getAllBots() { return [...bots.keys()] }
 export function deleteSession(n) {
     bots.delete(n)
-    fs.rmSync(`/app/sessions/${n}`, { recursive: true, force: true })
+    // FIXED: Now uses SESSIONS_DIR
+    const fullPath = path.join(SESSIONS_DIR, n)
+    if(fs.existsSync(fullPath)) {
+        fs.rmSync(fullPath, { recursive: true, force: true })
+        console.log(`Deleted session: ${fullPath}`)
+    }
 }

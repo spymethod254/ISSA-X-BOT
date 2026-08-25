@@ -62,7 +62,6 @@
 3. Add env vars: `SESSION_ID`, `OWNER_NUMBER=254743710474`
 4. Deploy!
 
-</div>
 ---
 
 ### 🚀 Deploy Your Own (Recommended)
@@ -105,6 +104,7 @@ For educational purposes only.
 
 ### ⭐ Star this repo!
 GWIJITECH MD — 2026
+</div>
 
 ---
 

@@ -50,16 +50,6 @@
 
 ---
 
-#### Environment Variables
-
-```env
-OWNER_NUMBER=254743710474
-BOT_NAME=ISSA X ULTRA
-PREFIX=.
-SESSION_ID= (auto-generated)
-
----
-
 ### 👑 Owner
 POWERED BY ISSA X ULTRA
 © 2026 GWIJITECH MD
@@ -78,3 +68,11 @@ For educational purposes only.
 GWIJITECH MD — 2026
 
 ---
+
+#### Environment Variables
+
+```env
+OWNER_NUMBER=254743710474
+BOT_NAME=ISSA X ULTRA
+PREFIX=.
+SESSION_ID= (auto-generated)

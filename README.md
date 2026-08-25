@@ -55,8 +55,8 @@ POWERED BY ISSA X ULTRA
 © 2026 GWIJITECH MD
 Made with ❤️ in Kenya 🇰🇪
 
-           <p align="center">
-            <img src="https://wa.me/254743710474?text=Hi%20GWIJITECH%20MD%20👋%20I%20need%20ISSA%20X%20ULTRA%20bot" target="_blank" class="w-14 h-14 glass rounded-full flex items-center justify-center text-white text-2xl hover:bg-green-500 hover:text-white transition shadow-[0_0_20px_rgba(34,197,94,0.3)]"><i class="fab fa-whatsapp"></i></img>
+<p align="center">
+  <img src="https://img.shields.io/badge/WhatsApp%20Channel-Multi%20Device-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
 </p>
 
 ---

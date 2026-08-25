@@ -58,6 +58,8 @@ BOT_NAME=ISSA X ULTRA
 PREFIX=.
 SESSION_ID= (auto-generated)
 
+---
+
 ### 👑 Owner
 POWERED BY ISSA X ULTRA
 © 2026 GWIJITECH MD

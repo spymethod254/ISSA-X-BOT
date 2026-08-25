@@ -28,6 +28,9 @@
 
 ### 📜 Commands
 .menu • .ping • .alive • .owner • .sticker • .play • .tiktok • .fb • .kick • .promote • .antilink • .ai • .gpt
+
+---
+
 ### 🚀 Deployment
 
 #### Deploy to Railway (1-Click)
@@ -38,6 +41,8 @@
 2. Connect to Railway
 3. Add env vars: `SESSION_ID`, `OWNER_NUMBER=254743710474`
 4. Deploy!
+
+---
 
 #### Environment Variables
 

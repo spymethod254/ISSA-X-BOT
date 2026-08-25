@@ -38,25 +38,30 @@ app.get('/health', (req,res) => res.json({
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, async () => {
-    console.log(`✅ ISSA X ULTRA running on ${PORT}`)
+    console.log(`🚀 ISSA X ULTRA running on ${PORT}`)
     console.log(`📁 Sessions: ${SESSIONS_DIR}`)
 
-    // === AUTO LOAD ALL SAVED BOTS ON STARTUP - THIS FIXES PAIRING FAIL ===
     try {
         const folders = fs.readdirSync(SESSIONS_DIR)
+        let restored = 0
+        
         for (const folder of folders) {
-            if (folder.includes('.json')) continue // skip settings.json
+            if (folder.includes('.json')) continue
             const fullPath = path.join(SESSIONS_DIR, folder)
-            const credsPath = path.join(fullPath, 'creds.json')
             
-            if (fs.statSync(fullPath).isDirectory() && fs.existsSync(credsPath)) {
-                console.log(`🔄 Restoring bot: ${folder}`)
-                await createBot(folder)
-                await new Promise(r => setTimeout(r, 2000)) // avoid spam
-            }
+            if (!fs.statSync(fullPath).isDirectory()) continue
+            
+            const credsPath = path.join(fullPath, 'creds.json')
+            if (!fs.existsSync(credsPath)) continue
+
+            console.log(`🔄 Restoring bot: ${folder}`)
+            await createBot(folder)
+            restored++
+            await new Promise(r => setTimeout(r, 3000))
         }
-        console.log(`✅ Restored ${folders.length} sessions`)
+        console.log(`✅ Restored ${restored} sessions`) // <-- FIXED COUNT
     } catch (e) {
         console.log("No sessions to restore:", e.message)
+        console.log(`✅ Restored 0 sessions`)
     }
 })

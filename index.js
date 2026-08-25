@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url'
 import fs from 'fs'
 import pairRoute from './routes/pair.js'
 import botsRoute from './routes/bots.js'
-import { createBot } from './botManager.js' // <--- YOU MISSED THIS
+import { createBot } from './botManager.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -33,7 +33,7 @@ app.get('/health', (req,res) => res.json({
     status: 'ok', 
     uptime: process.uptime(),
     sessionsPath: SESSIONS_DIR,
-    activeBots: fs.readdirSync(SESSIONS_DIR).filter(f => !f.includes('.json')).length
+    activeBots: fs.readdirSync(SESSIONS_DIR).filter(f => !f.includes('.json') && fs.statSync(path.join(SESSIONS_DIR,f)).isDirectory()).length
 }))
 
 const PORT = process.env.PORT || 3000

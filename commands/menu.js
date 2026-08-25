@@ -1,17 +1,70 @@
+import config from '../config.js'
+
 export default {
- name: 'menu', aliases: ['help'],
- execute: async (sock,m) => {
-  const txt = `
-*╭━━━ ISSA X ULTRA ━━━╮*
-*┃*.ping.alive.menu.owner
-*┃* *STICKER:*.sticker.toimg
-*┃* *GROUP:*.tagall.hidetag.kick.add.promote.demote.group open/close.link
-*┃* *FUN:*.joke.quote.ship.8ball
-*┃* *MEDIA:*.play.tiktok
-*┃* *TOOLS:*.calc 2+2.weather Mombasa.ai
-*╰━━━━━━━━━━━━━━━━━━━━╯*
-_Total Commands: ${sock.commandsCount || 30} | Multi-Session ✅_
+    name: 'menu',
+    aliases: ['help', 'list'],
+    desc: 'Show all commands',
+    async execute(sock, m, args) {
+        const jid = m.key.remoteJid
+        const pushName = m.pushName || 'User'
+        const prefix = config.prefix
+        const totalCmds = 32
+        const uptime = Math.floor(process.uptime() / 60)
+        const imageUrl = 'https://files.catbox.moe/o6jrdp.jpg'
+
+        const menuText = `
+╭───「 *${config.botName.toUpperCase()}* 」───
+│  👋 Hello @${pushName}
+│  🤖 Bot: ${config.botName}
+│  👑 Owner: ${config.ownerName}
+│  🔣 Prefix: ${prefix}
+│  ⏱️ Uptime: ${uptime}m
+│  📦 Commands: ${totalCmds}
+╰────────────────
+
+╭───「 *AI & CHAT* 」───
+│ ${prefix}ai <question>
+│ ${prefix}gpt <text>
+│ ${prefix}imagine <prompt>
+╰────────────────
+
+╭───「 *GROUP* 」───
+│ ${prefix}tagall [msg]
+│ ${prefix}hidetag [msg]
+│ ${prefix}kick @user
+│ ${prefix}add 255xx
+│ ${prefix}promote / demote
+│ ${prefix}group open/close
+│ ${prefix}link / revoke
+│ ${prefix}antilink on/off
+│ ${prefix}welcome on/off
+╰────────────────
+
+╭───「 *DOWNLOADER* 」───
+│ ${prefix}play <song>
+│ ${prefix}ytmp3 <link>
+│ ${prefix}ytmp4 <link>
+│ ${prefix}tiktok <link>
+│ ${prefix}fb <link>
+│ ${prefix}ig <link>
+╰────────────────
+
+╭───「 *TOOLS* 」───
+│ ${prefix}sticker
+│ ${prefix}toimg
+│ ${prefix}ping
+│ ${prefix}alive
+│ ${prefix}owner
+│ ${prefix}calc <expr>
+╰────────────────
+
+> *POWERED BY ISSA X ULTRA*
 `
-  await sock.sendMessage(m.key.remoteJid, {text: txt}, {quoted:m})
- }
+
+        await sock.sendMessage(jid, {
+            image: { url: imageUrl },
+            caption: menuText,
+            mentions: [m.key.participant || jid]
+        }, { quoted: m })
+    }
 }

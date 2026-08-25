@@ -25,6 +25,24 @@
 ### 📜 Commands
 .menu • .ping • .alive • .owner • .sticker • .play • .tiktok • .fb • .kick • .promote • .antilink • .ai • .gpt
 ### 🚀 Deployment
+
+#### Deploy to Railway (1-Click)
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/github)
+
+1. Fork this repo
+2. Connect to Railway
+3. Add env vars: `SESSION_ID`, `OWNER_NUMBER=254743710474`
+4. Deploy!
+
+#### Environment Variables
+
+```env
+OWNER_NUMBER=254743710474
+BOT_NAME=ISSA X ULTRA
+PREFIX=.
+SESSION_ID= (auto-generated)
+### 🚀 Deployment
 1. Fork repo
 2. Connect Railway
 3. Add `OWNER_NUMBER=254743710474`

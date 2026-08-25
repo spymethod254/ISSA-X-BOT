@@ -1,9 +1,10 @@
 import config from './config.js'
-import makeWASocket, { useMultiFileAuthState, Browsers, DisconnectReason } from '@whiskeysockets/baileys'
+import makeWASocket, { useMultiFileAuthState, Browsers, DisconnectReason, makeCacheableSignalKeyStore } from '@whiskeysockets/baileys'
 import pino from 'pino'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import NodeCache from 'node-cache'
 import { antiLink, antiSpam } from './middleware/antilink.js'
 import { welcomeHandler } from './events/welcome.js'
 import { statusHandler } from './events/status.js'
@@ -14,30 +15,30 @@ const __dirname = path.dirname(__filename)
 const bots = new Map()
 const commands = new Map()
 
-// === SMART SESSIONS PATH - WORKS LOCAL + RAILWAY ===
-const SESSIONS_DIR = process.env.SESSIONS_DIR || (fs.existsSync('/app')? '/app/sessions' : path.join(process.cwd(), 'sessions'))
+// === RAILWAY SAFE PATH ===
+const SESSIONS_DIR = process.env.SESSIONS_DIR || (fs.existsSync('/app') ? '/app/sessions' : path.join(process.cwd(), 'sessions'))
+if(!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true })
+
+const logger = pino({ level: 'silent' })
+const msgRetryCounterCache = new NodeCache()
 
 let settings = {}
 try {
-    const settingsPath = path.join(SESSIONS_DIR, 'settings.json')
-    if(fs.existsSync(settingsPath)) {
-        settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'))
-    }
+    const p = path.join(SESSIONS_DIR, 'settings.json')
+    if(fs.existsSync(p)) settings = JSON.parse(fs.readFileSync(p, 'utf8'))
 } catch { settings = {} }
 
-// Load all commands
 function loadCommands() {
     const commandsPath = path.join(__dirname, 'commands')
     if (!fs.existsSync(commandsPath)) return
     const files = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'))
     for (const file of files) {
         import(`./commands/${file}`).then(mod => {
-            const list = mod.default? (Array.isArray(mod.default)? mod.default : [mod.default]) : Object.values(mod)
+            const list = mod.default ? (Array.isArray(mod.default) ? mod.default : [mod.default]) : Object.values(mod)
             for(const cmd of list) {
                 if(cmd?.name) {
                     commands.set(cmd.name, cmd)
                     if(cmd.aliases) cmd.aliases.forEach(a => commands.set(a, cmd))
-                    console.log(`Loaded: ${cmd.name}`)
                 }
             }
         })
@@ -50,66 +51,61 @@ export async function createBot(number) {
     if(!fs.existsSync(sessionPath)) fs.mkdirSync(sessionPath, { recursive: true })
 
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath)
+
     const sock = makeWASocket({
-        auth: state,
-        logger: pino({ level: 'silent' }),
-        browser: Browsers.macOS('Chrome'),
-        printQRInTerminal: false
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, logger)
+        },
+        logger,
+        browser: Browsers.macOS('Safari'),
+        printQRInTerminal: false,
+        msgRetryCounterCache,
+        syncFullHistory: false
     })
 
-    if(config.welcome === 'true') {
-        welcomeHandler(sock)
-        console.log(`✅ Welcome ON for ${number}`)
-    }
-    if(config.autoViewStatus === 'true') {
-        statusHandler(sock)
-        console.log(`✅ Auto View Status ON for ${number}`)
-    }
-    console.log(`Bot: ${config.botName} | Prefix: ${config.prefix} | Owner: ${config.ownerName} | Sessions: ${SESSIONS_DIR}`)
+    console.log(`Bot: ${config.botName} | Prefix: ${config.prefix} | Sessions: ${SESSIONS_DIR}/${number}`)
 
     sock.ev.on('creds.update', saveCreds)
 
-    // === UPDATED CONNECTION WITH BACKUP ===
     sock.ev.on('connection.update', async (u) => {
-        if(u.connection === 'close') {
-            const code = u.lastDisconnect?.error?.output?.statusCode
-            if(code === DisconnectReason.loggedOut) deleteSession(number)
-            else if(code!== DisconnectReason.loggedOut) {
-                console.log(`Reconnecting ${number}...`)
+        const { connection, lastDisconnect } = u
+        if(connection === 'close') {
+            const code = lastDisconnect?.error?.output?.statusCode
+            console.log(`❌ ${number} closed, code: ${code}`)
+            if(code === DisconnectReason.loggedOut) {
+                deleteSession(number)
+            } else {
+                console.log(`Reconnecting ${number} in 3s...`)
                 setTimeout(() => createBot(number), 3000)
             }
         }
-        if(u.connection === 'open') {
+        if(connection === 'open') {
             console.log(`✅ ${number} connected as ${config.botName}`)
+            
+            if(config.welcome === 'true') welcomeHandler(sock)
+            if(config.autoViewStatus === 'true') statusHandler(sock)
 
-            // === SEND BACKUP TO OWN WHATSAPP INBOX ===
+            // === SAFE BACKUP - FIXED ===
             try {
-                await new Promise(r => setTimeout(r, 3000)) // wait 3s for creds to save
-
+                await new Promise(r => setTimeout(r, 3000))
                 const credsPath = path.join(sessionPath, 'creds.json')
                 if(fs.existsSync(credsPath)) {
-                    const credsData = fs.readFileSync(credsPath, 'utf-8')
-                    const base64Session = Buffer.from(credsData).toString('base64')
-                    const sessionId = `ISSA_X_ULTRA~${base64Session.slice(0, 250)}...[FULL IN FILE]`
-
-                    // 1. Send welcome message to own inbox
                     await sock.sendMessage(sock.user.id, {
                         image: { url: 'https://files.catbox.moe/o6jrdp.jpg' },
-                        caption: `*ISSA X ULTRA CONNECTED* ✅\n\n*Number:* ${number}\n*Bot:* ${config.botName}\n*Prefix:* ${config.prefix}\n*Mode:* Multi-Session\n*Server:* Railway\n\n_Your bot is now live and saved in 2 places:_\n1️⃣ Railway Volume: \`/app/sessions/${number}\`\n2️⃣ This chat (backup file below)\n\nType *.menu* to start!\n\n*POWERED BY ISSA X ULTRA*`
+                        caption: `*ISSA X ULTRA CONNECTED* ✅\n\n*Number:* ${number}\n*Bot:* ${config.botName}\n*Prefix:* ${config.prefix}\n*Mode:* Multi-Session\n\nType *.menu* to start!\n\n*POWERED BY ISSA X ULTRA*`
                     })
 
-                    // 2. Send creds.json file backup
                     await sock.sendMessage(sock.user.id, {
                         document: fs.readFileSync(credsPath),
                         mimetype: 'application/json',
                         fileName: `creds-${number}.json`,
-                        caption: `*BACKUP SESSION - ${number}*\n\nKeep this file safe!\nIf Railway volume deletes, upload it back to sessions/${number}/\n\n*POWERED BY ISSA X ULTRA*`
+                        caption: `*BACKUP - ${number}*\nKeep safe!`
                     })
-
-                    console.log(`📤 Backup sent to ${number} inbox`)
+                    console.log(`📤 Backup sent to ${number}`)
                 }
-            } catch (e) {
-                console.log('Backup inbox failed:', e.message)
+            } catch(e) {
+                console.log('Backup failed:', e.message)
             }
         }
     })
@@ -123,13 +119,11 @@ export async function createBot(number) {
         if(config.autoTyping === 'true') await sock.sendPresenceUpdate('composing', m.key.remoteJid)
 
         const body = m.message.conversation || m.message.extendedTextMessage?.text || m.message.imageMessage?.caption || ''
-
+        
         if(m.key.remoteJid.endsWith('@g.us')) {
             const gid = m.key.remoteJid
-            if(config.antiLink === 'true') {
-                if(settings[gid]?.antilink!== false) {
-                    if(await antiLink(sock, m, body)) return
-                }
+            if(config.antiLink === 'true' && settings[gid]?.antilink !== false) {
+                if(await antiLink(sock, m, body)) return
             }
             if(config.antiSpam === 'true') {
                 if(await antiSpam(sock, m)) return
@@ -138,13 +132,12 @@ export async function createBot(number) {
 
         const prefix = config.prefix
         if(!body.startsWith(prefix)) return
-
         const args = body.slice(1).trim().split(/ +/)
         const cmdName = args.shift().toLowerCase()
         const cmd = commands.get(cmdName)
         if(cmd) {
             try { await cmd.execute(sock, m, args, config) }
-            catch(e) { console.log(`Error in ${cmdName}:`, e) }
+            catch(e) { console.log(`Error ${cmdName}:`, e) }
         }
     })
 

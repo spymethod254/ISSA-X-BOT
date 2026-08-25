@@ -65,5 +65,3 @@ For educational purposes only.
 
 ### ⭐ Star this repo!
 GWIJITECH MD — 2026
-
----

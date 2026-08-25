@@ -1,6 +1,41 @@
+import config from '../config.js'
+
 export default {
     name: 'alive',
+    aliases: ['bot', 'status'],
+    desc: 'Check if bot is alive',
     execute: async (sock, m) => {
-        await sock.sendMessage(m.key.remoteJid, { text: `*ISSA X ULTRA* is running!\nUptime: ${Math.floor(process.uptime()/60)} min\nMulti-Session Mode ✅` }, { quoted: m })
+        const uptimeMin = Math.floor(process.uptime() / 60)
+        const uptimeH = Math.floor(uptimeMin / 60)
+        const uptimeM = uptimeMin % 60
+        const imageUrl = 'https://files.catbox.moe/o6jrdp.jpg'
+        
+        const aliveText = `
+╭───「 *ALIVE* 」───
+│  ✅ *${config.botName}* is Running!
+│
+│  👑 Owner: ${config.ownerName}
+│  ⏱️ Uptime: ${uptimeH}h ${uptimeM}m
+│  ⚡ Mode: Multi-Session
+│  🔣 Prefix: ${config.prefix}
+│  📦 Version: 1.0.0 ULTRA
+╰────────────────
+
+> _Multi-device bot hosted on Railway_
+> _Pair Site: ${process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : 'Online'}_
+
+*POWERED BY ISSA X ULTRA*
+`
+
+        await sock.sendMessage(m.key.remoteJid, {
+            image: { url: imageUrl },
+            caption: aliveText,
+            footer: 'POWERED BY ISSA X ULTRA',
+            buttons: [
+                { buttonId: `${config.prefix}menu`, buttonText: { displayText: '📜 MENU' }, type: 1 },
+                { buttonId: `${config.prefix}ping`, buttonText: { displayText: '⚡ PING' }, type: 1 }
+            ],
+            headerType: 4
+        }, { quoted: m })
     }
 }

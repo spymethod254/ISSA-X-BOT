@@ -31,3 +31,18 @@
 4. Deploy!
 
 ### Env Vars
+OWNER_NUMBER=254743710474
+BOT_NAME=ISSA X ULTRA
+PREFIX=.
+
+### 👑 Owner
+POWERED BY ISSA X ULTRA
+© 2026 GWIJITECH MD
+Made with ❤️ in Kenya 🇰🇪
+WhatsApp: wa.me/254743710474
+
+### ⚠️ Disclaimer
+For educational purposes only.
+
+### ⭐ Star this repo!
+GWIJITECH MD — 2026

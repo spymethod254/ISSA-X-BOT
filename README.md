@@ -53,9 +53,6 @@ OWNER_NUMBER=254743710474
 BOT_NAME=ISSA X ULTRA
 PREFIX=.
 SESSION_ID= (auto-generated)
-### 🚀 Deployment
-
----
 
 ### 👑 Owner
 POWERED BY ISSA X ULTRA

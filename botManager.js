@@ -139,7 +139,7 @@ async function createSocket(number, pairing = false) {
 
         msgRetryCounterCache,
 
-        syncFullHistory: false
+        syncFullHistory: false,
 
         usePairingCode: pairing
     })

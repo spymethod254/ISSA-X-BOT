@@ -364,20 +364,22 @@ async function createSocket(number, pairing = false) {
     // =================================================
     // MESSAGES
     // =================================================
-
     sock.ev.on(
-        'messages.upsert',
-        async ({ messages }) => {
+    'messages.upsert',
+    async ({ messages }) => {
 
-            const m = messages[0]
+        for (const m of messages) {
+
             console.log(
-    `📩 MESSAGE RECEIVED from ${m?.key?.remoteJid}:`,
-    JSON.stringify(m?.message || {}).slice(0, 300)
-)
+                `📩 MESSAGE RECEIVED from ${m?.key?.remoteJid}:`,
+                JSON.stringify(m?.message || {}).slice(0, 500)
+            )
 
-            if (!m?.message) return
-            if (m.key.fromMe) return
-            if (m.key.remoteJid === 'status@broadcast') return
+            if (!m?.message) continue
+            if (m.key.fromMe) continue
+            if (m.key.remoteJid === 'status@broadcast') continue
+
+            // ... keep the rest of your handler here
 
             if (config.autoRead === 'true') {
                 await sock.readMessages([m.key])
@@ -396,6 +398,11 @@ async function createSocket(number, pairing = false) {
                 m.message.imageMessage?.caption ||
                 ''
 
+console.log(`📝 BODY DEBUG: "${body}"`)
+
+          }
+    }
+)
             // =========================================
             // GROUP SECURITY
             // =========================================

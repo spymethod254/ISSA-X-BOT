@@ -361,128 +361,157 @@ async function createSocket(number, pairing = false) {
         }
     )
 
+        // =================================================
+    // MESSAGES
     // =================================================
-// MESSAGES
-// =================================================
+    sock.ev.on(
+        'messages.upsert',
+        async ({ messages }) => {
 
-sock.ev.on(
-    'messages.upsert',
-    async ({ messages }) => {
+            for (const m of messages) {
 
-        for (const m of messages) {
-
-            console.log(
-                `📩 MESSAGE RECEIVED from ${m?.key?.remoteJid}:`,
-                JSON.stringify(m?.message || {}).slice(0, 500)
-            )
-
-            if (!m?.message) continue
-            if (m.key.fromMe) continue
-            if (m.key.remoteJid === 'status@broadcast') continue
-
-            // =========================================
-            // AUTO READ
-            // =========================================
-
-            if (config.autoRead === 'true') {
-                await sock.readMessages([m.key])
-            }
-
-            // =========================================
-            // AUTO TYPING
-            // =========================================
-
-            if (config.autoTyping === 'true') {
-                await sock.sendPresenceUpdate(
-                    'composing',
-                    m.key.remoteJid
+                console.log(
+                    `📩 MESSAGE RECEIVED from ${m?.key?.remoteJid}:`,
+                    JSON.stringify(m?.message || {}).slice(0, 500)
                 )
-            }
 
-            // =========================================
-            // GET MESSAGE TEXT
-            // =========================================
+                if (!m?.message) continue
+                if (m.key.fromMe) continue
+                if (m.key.remoteJid === 'status@broadcast') continue
 
-            const body =
-                m.message.conversation ||
-                m.message.extendedTextMessage?.text ||
-                m.message.imageMessage?.caption ||
-                ''
+                // =====================================
+                // MESSAGE BODY
+                // =====================================
 
-            console.log(
-                `📝 BODY DEBUG: "${body}"`
-            )
+                const body =
+                    m.message.conversation ||
+                    m.message.extendedTextMessage?.text ||
+                    m.message.imageMessage?.caption ||
+                    m.message.videoMessage?.caption ||
+                    m.message.documentMessage?.caption ||
+                    ''
 
-            // =========================================
-            // GROUP SECURITY
-            // =========================================
+                console.log(
+                    `📝 BODY DEBUG: "${body}"`
+                )
 
-            if (m.key.remoteJid.endsWith('@g.us')) {
+                // =====================================
+                // AUTO READ
+                // =====================================
 
-                const gid =
-                    m.key.remoteJid
+                if (config.autoRead === 'true') {
+
+                    try {
+
+                        await sock.readMessages([
+                            m.key
+                        ])
+
+                    } catch (e) {
+
+                        console.log(
+                            'Auto-read failed:',
+                            e.message
+                        )
+                    }
+                }
+
+                // =====================================
+                // AUTO TYPING
+                // =====================================
 
                 if (
-                    config.antiLink === 'true' &&
-                    settings[gid]?.antilink !== false
+                    config.autoTyping === 'true' &&
+                    body
                 ) {
 
-                    if (
-                        await antiLink(
-                            sock,
-                            m,
-                            body
+                    try {
+
+                        await sock.sendPresenceUpdate(
+                            'composing',
+                            m.key.remoteJid
                         )
-                    ) {
-                        continue
+
+                    } catch (e) {
+
+                        console.log(
+                            'Typing failed:',
+                            e.message
+                        )
                     }
                 }
 
-                if (config.antiSpam === 'true') {
+                // =====================================
+                // GROUP SECURITY
+                // =====================================
+
+                if (
+                    m.key.remoteJid?.endsWith('@g.us')
+                ) {
+
+                    const gid =
+                        m.key.remoteJid
 
                     if (
-                        await antiSpam(
-                            sock,
-                            m
-                        )
+                        config.antiLink === 'true' &&
+                        settings[gid]?.antilink !== false
                     ) {
-                        continue
+
+                        if (
+                            await antiLink(
+                                sock,
+                                m,
+                                body
+                            )
+                        ) {
+                            continue
+                        }
+                    }
+
+                    if (config.antiSpam === 'true') {
+
+                        if (
+                            await antiSpam(
+                                sock,
+                                m
+                            )
+                        ) {
+                            continue
+                        }
                     }
                 }
-            }
 
-            // =========================================
-            // COMMANDS
-            // =========================================
+                // =====================================
+                // COMMANDS
+                // =====================================
 
-            const prefix =
-                config.prefix
+                const prefix =
+                    config.prefix
 
-            if (!body.startsWith(prefix)) {
-                continue
-            }
+                if (!body.startsWith(prefix)) {
+                    continue
+                }
 
-            const args =
-                body
-                    .slice(prefix.length)
-                    .trim()
-                    .split(/ +/)
+                const args =
+                    body
+                        .slice(prefix.length)
+                        .trim()
+                        .split(/ +/)
+                        .filter(Boolean)
 
-            const cmdName =
-                args.shift()?.toLowerCase()
+                const cmdName =
+                    args.shift()?.toLowerCase()
 
-            const cmd =
-                commands.get(cmdName)
+                const cmd =
+                    commands.get(cmdName)
 
-            console.log(
-                `🧪 COMMAND DEBUG | body="${body}" | prefix="${prefix}" | cmd="${cmdName}" | found=${!!cmd}`
-            )
+                console.log(
+                    `🧪 COMMAND DEBUG | body="${body}" | prefix="${prefix}" | cmd="${cmdName}" | found=${!!cmd}`
+                )
 
-            // =========================================
-            // EXECUTE COMMAND
-            // =========================================
-
-            if (cmd) {
+                if (!cmd) {
+                    continue
+                }
 
                 try {
 
@@ -499,21 +528,10 @@ sock.ev.on(
                         `❌ Error executing ${cmdName}:`,
                         e
                     )
-
-                    await sock.sendMessage(
-                        m.key.remoteJid,
-                        {
-                            text: '❌ An error occurred while executing this command.'
-                        },
-                        {
-                            quoted: m
-                        }
-                    )
                 }
             }
         }
-    }
-)
+    )
 
     // =================================================
     // REGISTER SOCKET

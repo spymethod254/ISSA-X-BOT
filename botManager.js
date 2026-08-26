@@ -6,6 +6,7 @@ import makeWASocket, {
     makeCacheableSignalKeyStore,
     delay
 } from '@whiskeysockets/baileys'
+
 import pino from 'pino'
 import fs from 'fs'
 import path from 'path'
@@ -16,144 +17,220 @@ import { antiLink, antiSpam } from './middleware/antilink.js'
 import { welcomeHandler } from './events/welcome.js'
 import { statusHandler } from './events/status.js'
 
+
+/* =========================================================
+   PATHS
+========================================================= */
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const logger = pino({ level: 'silent' })
-const msgRetryCounterCache = new NodeCache()
 
-// All currently running bots
-const bots = new Map()
-
-// All commands
-const commands = new Map()
-
-// === RAILWAY SAFE PATH ===
+// Railway persistent sessions
 const SESSIONS_DIR =
-    process.env.SESSIONS_DIR || '/app/sessions'
+    process.env.SESSIONS_DIR ||
+    '/app/sessions'
 
-const DATA_DIR = path.join(SESSIONS_DIR, '..', 'data')
+
+// Separate data directory
+const DATA_DIR =
+    path.join(SESSIONS_DIR, '..', 'data')
+
 
 if (!fs.existsSync(SESSIONS_DIR)) {
-    fs.mkdirSync(SESSIONS_DIR, { recursive: true })
+    fs.mkdirSync(SESSIONS_DIR, {
+        recursive: true
+    })
 }
 
 if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true })
+    fs.mkdirSync(DATA_DIR, {
+        recursive: true
+    })
 }
 
-// === LOAD SETTINGS ===
+
+/* =========================================================
+   LOGGER / CACHE
+========================================================= */
+
+const logger =
+    pino({
+        level: 'silent'
+    })
+
+
+const msgRetryCounterCache =
+    new NodeCache()
+
+
+/* =========================================================
+   BOT STORAGE
+========================================================= */
+
+// number -> socket
+const bots = new Map()
+
+
+// command name -> command
+const commands = new Map()
+
+
+// number -> pairing information
+const pairingSockets = new Map()
+
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+
 let settings = {}
 
 try {
-    const settingsPath = path.join(DATA_DIR, 'settings.json')
+
+    const settingsPath =
+        path.join(
+            DATA_DIR,
+            'settings.json'
+        )
 
     if (fs.existsSync(settingsPath)) {
-        settings = JSON.parse(
-            fs.readFileSync(settingsPath, 'utf8')
-        )
+
+        settings =
+            JSON.parse(
+                fs.readFileSync(
+                    settingsPath,
+                    'utf8'
+                )
+            )
     }
+
 } catch {
+
     settings = {}
+
 }
 
-// =====================================================
-// LOAD COMMANDS
-// =====================================================
+
+/* =========================================================
+   LOAD COMMANDS
+========================================================= */
 
 function loadCommands() {
-    const commandsPath = path.join(__dirname, 'commands')
 
-    if (!fs.existsSync(commandsPath)) return
+    const commandsPath =
+        path.join(
+            __dirname,
+            'commands'
+        )
 
-    const files = fs
-        .readdirSync(commandsPath)
-        .filter(file => file.endsWith('.js'))
+    if (!fs.existsSync(commandsPath)) {
+        return
+    }
+
+
+    const files =
+        fs.readdirSync(
+            commandsPath
+        )
+        .filter(
+            file => file.endsWith('.js')
+        )
+
 
     for (const file of files) {
-        import(`./commands/${file}`).then(mod => {
 
-            const list = mod.default
-                ? (
-                    Array.isArray(mod.default)
-                        ? mod.default
-                        : [mod.default]
-                )
-                : Object.values(mod)
+        import(`./commands/${file}`)
+            .then(mod => {
 
-            for (const cmd of list) {
+                const list =
+                    mod.default
+                        ? (
+                            Array.isArray(mod.default)
+                                ? mod.default
+                                : [mod.default]
+                        )
+                        : Object.values(mod)
 
-                if (!cmd?.name) continue
 
-                commands.set(cmd.name, cmd)
+                for (const cmd of list) {
 
-                if (cmd.aliases) {
-                    cmd.aliases.forEach(alias => {
-                        commands.set(alias, cmd)
-                    })
+                    if (!cmd?.name) {
+                        continue
+                    }
+
+
+                    commands.set(
+                        cmd.name,
+                        cmd
+                    )
+
+
+                    if (cmd.aliases) {
+
+                        cmd.aliases.forEach(alias => {
+
+                            commands.set(
+                                alias,
+                                cmd
+                            )
+
+                        })
+
+                    }
+
                 }
-            }
 
-        }).catch(err => {
-            console.log(`Failed loading command ${file}:`, err.message)
-        })
+            })
+            .catch(err => {
+
+                console.log(
+                    `❌ Failed loading command ${file}:`,
+                    err.message
+                )
+
+            })
+
     }
+
 }
 
 loadCommands()
 
-// =====================================================
-// CREATE SOCKET
-// =====================================================
 
-async function createSocket(number, pairing = false) {
+/* =========================================================
+   GET SESSION PATH
+========================================================= */
 
-    const sessionPath = path.join(
+function getSessionPath(number) {
+
+    return path.join(
         SESSIONS_DIR,
         number
     )
 
-    if (!fs.existsSync(sessionPath)) {
-        fs.mkdirSync(sessionPath, {
-            recursive: true
-        })
-    }
+}
 
-    const { state, saveCreds } =
-        await useMultiFileAuthState(sessionPath)
 
-    const sock = makeWASocket({
-        auth: {
-            creds: state.creds,
-            keys: makeCacheableSignalKeyStore(
-                state.keys,
-                logger
-            )
-        },
+/* =========================================================
+   START BOT EVENTS
+========================================================= */
 
-        logger,
+function attachBotHandlers(sock, number) {
 
-        browser: Browsers.macOS('Safari'),
-
-        printQRInTerminal: false,
-
-        msgRetryCounterCache,
-
-        syncFullHistory: false
-    })
-
-    // =================================================
-    // SAVE CREDENTIALS
-    // =================================================
+    /* -----------------------------------------------------
+       CREDENTIALS
+    ----------------------------------------------------- */
 
     sock.ev.on(
         'creds.update',
-        saveCreds
+        sock.__saveCreds
     )
 
-    // =================================================
-    // CONNECTION UPDATE
-    // =================================================
+
+    /* -----------------------------------------------------
+       CONNECTION
+    ----------------------------------------------------- */
 
     sock.ev.on(
         'connection.update',
@@ -164,9 +241,10 @@ async function createSocket(number, pairing = false) {
                 lastDisconnect
             } = update
 
-            // =========================================
-            // CONNECTED
-            // =========================================
+
+            /* =============================================
+               CONNECTED
+            ============================================= */
 
             if (connection === 'open') {
 
@@ -174,41 +252,81 @@ async function createSocket(number, pairing = false) {
                     `✅ ${number} connected as ${config.botName}`
                 )
 
-                // Pairing is finished
-                if (pairing) {
+
+                // Remove pairing lock
+                pairingSockets.delete(number)
+
+
+                // Register active bot
+                bots.set(
+                    number,
+                    sock
+                )
+
+
+                /* -----------------------------------------
+                   EVENTS
+                ----------------------------------------- */
+
+                try {
+
+                    if (
+                        config.welcome === 'true'
+                    ) {
+
+                        welcomeHandler(sock)
+
+                    }
+
+
+                    if (
+                        config.autoViewStatus === 'true'
+                    ) {
+
+                        statusHandler(sock)
+
+                    }
+
+                } catch (e) {
+
                     console.log(
-                        `🎉 PAIRING COMPLETED: ${number}`
+                        `⚠️ Event handler error for ${number}:`,
+                        e.message
                     )
+
                 }
 
-                if (config.welcome === 'true') {
-                    welcomeHandler(sock)
-                }
 
-                if (config.autoViewStatus === 'true') {
-                    statusHandler(sock)
-                }
-
-                // =====================================
-                // BACKUP
-                // =====================================
+                /* -----------------------------------------
+                   BACKUP
+                ----------------------------------------- */
 
                 try {
 
                     await delay(3000)
 
-                    const credsPath = path.join(
-                        sessionPath,
-                        'creds.json'
-                    )
 
-                    if (fs.existsSync(credsPath)) {
+                    const sessionPath =
+                        getSessionPath(number)
+
+
+                    const credsPath =
+                        path.join(
+                            sessionPath,
+                            'creds.json'
+                        )
+
+
+                    if (
+                        fs.existsSync(credsPath)
+                    ) {
 
                         await sock.sendMessage(
                             sock.user.id,
                             {
                                 image: {
-                                    url: 'https://files.catbox.moe/o6jrdp.jpg'
+                                    url:
+                                        'https://files.catbox.moe/o6jrdp.jpg'
                                 },
 
                                 caption:
@@ -222,11 +340,14 @@ async function createSocket(number, pairing = false) {
                             }
                         )
 
+
                         await sock.sendMessage(
                             sock.user.id,
                             {
                                 document:
-                                    fs.readFileSync(credsPath),
+                                    fs.readFileSync(
+                                        credsPath
+                                    ),
 
                                 mimetype:
                                     'application/json',
@@ -239,174 +360,289 @@ async function createSocket(number, pairing = false) {
                             }
                         )
 
+
                         console.log(
                             `📤 Backup sent to ${number}`
                         )
+
                     }
 
                 } catch (e) {
 
                     console.log(
-                        'Backup failed:',
+                        `⚠️ Backup failed for ${number}:`,
                         e.message
                     )
+
                 }
 
-                return
             }
 
-            // =========================================
-            // CONNECTION CLOSED
-            // =========================================
+
+            /* =============================================
+               CONNECTION CLOSED
+            ============================================= */
 
             if (connection === 'close') {
 
                 const code =
-                    lastDisconnect?.error
-                        ?.output?.statusCode
+                    lastDisconnect
+                        ?.error
+                        ?.output
+                        ?.statusCode
+
 
                 console.log(
                     `❌ ${number} closed, code: ${code}`
                 )
 
-                // Remove the dead socket
-                if (bots.get(number) === sock) {
-                    bots.delete(number)
-                }
 
-                // Logged out = permanently remove session
+                bots.delete(
+                    number
+                )
+
+
+                pairingSockets.delete(
+                    number
+                )
+
+
+                /* -----------------------------------------
+                   LOGGED OUT
+                   
+                   IMPORTANT:
+                   Do NOT automatically delete the
+                   persistent session.
+                   ----------------------------------------- */
+
                 if (
-                    code ===
-                    DisconnectReason.loggedOut
+                    code === DisconnectReason.loggedOut
                 ) {
 
-                    deleteSession(number)
+                    console.log(
+                        `⚠️ ${number} was logged out. Session preserved.`
+                    )
+
+                    console.log(
+                        `🗑️ To intentionally delete it use DELETE /bots/${number}`
+                    )
 
                     return
                 }
 
-                // Otherwise reconnect
+
+                /* -----------------------------------------
+                   OTHER DISCONNECTS
+                ----------------------------------------- */
+
                 console.log(
-                    `🔄 Reconnecting ${number} in 3s...`
+                    `🔄 Reconnecting ${number} in 5s...`
                 )
 
-                setTimeout(async () => {
 
-                    try {
+                setTimeout(
+                    () => {
 
-                        // Don't create duplicate sockets
-                        if (bots.has(number)) {
-                            return
-                        }
+                        createBot(number)
+                            .catch(err => {
 
-                        await createBot(number)
+                                console.log(
+                                    `❌ Reconnect failed for ${number}:`,
+                                    err.message
+                                )
 
-                    } catch (e) {
+                            })
 
-                        console.log(
-                            `Reconnect failed for ${number}:`,
-                            e.message
-                        )
-                    }
+                    },
+                    5000
+                )
 
-                }, 3000)
             }
+
         }
     )
 
-    // =================================================
-    // MESSAGES
-    // =================================================
+
+    /* -----------------------------------------------------
+       MESSAGES
+    ----------------------------------------------------- */
 
     sock.ev.on(
         'messages.upsert',
-        async ({ messages }) => {
+        async ({
+            messages
+        }) => {
 
-            const m = messages[0]
+            try {
 
-            if (!m?.message) return
-            if (m.key.fromMe) return
-            if (m.key.remoteJid === 'status@broadcast') return
+                const m =
+                    messages[0]
 
-            if (config.autoRead === 'true') {
-                await sock.readMessages([m.key])
-            }
-
-            if (config.autoTyping === 'true') {
-                await sock.sendPresenceUpdate(
-                    'composing',
-                    m.key.remoteJid
-                )
-            }
-
-            const body =
-                m.message.conversation ||
-                m.message.extendedTextMessage?.text ||
-                m.message.imageMessage?.caption ||
-                ''
-
-            // =========================================
-            // GROUP SECURITY
-            // =========================================
-
-            if (m.key.remoteJid.endsWith('@g.us')) {
-
-                const gid =
-                    m.key.remoteJid
 
                 if (
-                    config.antiLink === 'true' &&
-                    settings[gid]?.antilink !== false
+                    !m?.message ||
+                    m.key?.fromMe
                 ) {
 
-                    if (
-                        await antiLink(
-                            sock,
-                            m,
-                            body
-                        )
-                    ) {
-                        return
-                    }
+                    return
+
                 }
 
-                if (config.antiSpam === 'true') {
+
+                if (
+                    m.key?.remoteJid ===
+                    'status@broadcast'
+                ) {
+
+                    return
+
+                }
+
+
+                /* -----------------------------------------
+                   AUTO READ
+                ----------------------------------------- */
+
+                if (
+                    config.autoRead === 'true'
+                ) {
+
+                    await sock.readMessages([
+                        m.key
+                    ])
+
+                }
+
+
+                /* -----------------------------------------
+                   AUTO TYPING
+                ----------------------------------------- */
+
+                if (
+                    config.autoTyping === 'true'
+                ) {
+
+                    await sock.sendPresenceUpdate(
+                        'composing',
+                        m.key.remoteJid
+                    )
+
+                }
+
+
+                /* -----------------------------------------
+                   MESSAGE BODY
+                ----------------------------------------- */
+
+                const body =
+                    m.message.conversation ||
+                    m.message.extendedTextMessage?.text ||
+                    m.message.imageMessage?.caption ||
+                    ''
+
+
+                if (!body) {
+                    return
+                }
+
+
+                /* -----------------------------------------
+                   GROUP SECURITY
+                ----------------------------------------- */
+
+                if (
+                    m.key.remoteJid?.endsWith('@g.us')
+                ) {
+
+                    const gid =
+                        m.key.remoteJid
+
 
                     if (
-                        await antiSpam(
-                            sock,
-                            m
-                        )
+                        config.antiLink === 'true' &&
+                        settings[gid]?.antilink !== false
                     ) {
-                        return
+
+                        if (
+                            await antiLink(
+                                sock,
+                                m,
+                                body
+                            )
+                        ) {
+
+                            return
+
+                        }
+
                     }
+
+
+                    if (
+                        config.antiSpam === 'true'
+                    ) {
+
+                        if (
+                            await antiSpam(
+                                sock,
+                                m
+                            )
+                        ) {
+
+                            return
+
+                        }
+
+                    }
+
                 }
-            }
 
-            // =========================================
-            // COMMANDS
-            // =========================================
 
-            const prefix =
-                config.prefix
+                /* -----------------------------------------
+                   COMMAND PREFIX
+                ----------------------------------------- */
 
-            if (!body.startsWith(prefix)) {
-                return
-            }
+                const prefix =
+                    config.prefix
 
-            const args =
-                body
-                    .slice(prefix.length)
-                    .trim()
-                    .split(/ +/)
 
-            const cmdName =
-                args.shift()?.toLowerCase()
+                if (
+                    !body.startsWith(prefix)
+                ) {
 
-            const cmd =
-                commands.get(cmdName)
+                    return
 
-            if (cmd) {
+                }
+
+
+                const args =
+                    body
+                        .slice(prefix.length)
+                        .trim()
+                        .split(/ +/)
+
+
+                const cmdName =
+                    args
+                        .shift()
+                        ?.toLowerCase()
+
+
+                if (!cmdName) {
+                    return
+                }
+
+
+                const cmd =
+                    commands.get(
+                        cmdName
+                    )
+
+
+                if (!cmd) {
+                    return
+                }
+
 
                 try {
 
@@ -420,177 +656,299 @@ async function createSocket(number, pairing = false) {
                 } catch (e) {
 
                     console.log(
-                        `Error ${cmdName}:`,
+                        `❌ Error executing ${cmdName} on ${number}:`,
                         e
                     )
+
                 }
+
+            } catch (e) {
+
+                console.log(
+                    `❌ Message handler error for ${number}:`,
+                    e.message
+                )
+
             }
+
         }
     )
 
-    // =================================================
-    // REGISTER SOCKET
-    // =================================================
+}
+
+
+/* =========================================================
+   CREATE NORMAL BOT
+========================================================= */
+
+export async function createBot(number) {
+
+    const sessionPath =
+        getSessionPath(number)
+
+
+    if (!fs.existsSync(sessionPath)) {
+
+        fs.mkdirSync(
+            sessionPath,
+            {
+                recursive: true
+            }
+        )
+
+    }
+
+
+    const {
+        state,
+        saveCreds
+    } =
+        await useMultiFileAuthState(
+            sessionPath
+        )
+
+
+    /* -----------------------------------------
+       Don't start an already active bot
+    ----------------------------------------- */
+
+    const existing =
+        bots.get(number)
+
+
+    if (existing) {
+
+        console.log(
+            `⚠️ ${number} is already active`
+        )
+
+        return existing
+
+    }
+
+
+    const sock =
+        makeWASocket({
+
+            auth: {
+
+                creds:
+                    state.creds,
+
+                keys:
+                    makeCacheableSignalKeyStore(
+                        state.keys,
+                        logger
+                    )
+
+            },
+
+            logger,
+
+            browser:
+                Browsers.macOS('Safari'),
+
+            printQRInTerminal:
+                false,
+
+            msgRetryCounterCache,
+
+            syncFullHistory:
+                false
+
+        })
+
+
+    // Save credentials
+    sock.__saveCreds =
+        saveCreds
+
+
+    console.log(
+        `🤖 Socket registered: ${number}`
+    )
+
+
+    attachBotHandlers(
+        sock,
+        number
+    )
+
 
     bots.set(
         number,
         sock
     )
 
-    console.log(
-        `🤖 Socket registered: ${number}`
-    )
-
-    return {
-        sock,
-        state,
-        sessionPath
-    }
-}
-
-// =====================================================
-// NORMAL BOT CREATION
-// =====================================================
-
-export async function createBot(number) {
-
-    // Don't create duplicate socket
-    if (bots.has(number)) {
-
-        console.log(
-            `⚠️ Bot already active: ${number}`
-        )
-
-        return bots.get(number)
-    }
-
-    const {
-        sock
-    } = await createSocket(
-        number,
-        false
-    )
 
     console.log(
         `🚀 Bot created: ${number}`
     )
 
+
     return sock
+
 }
 
-// =====================================================
-// PAIRING
-// =====================================================
+
+/* =========================================================
+   CREATE PAIRING BOT
+========================================================= */
 
 export async function createPairingBot(number) {
 
-    // If already active, don't create another socket
-    if (bots.has(number)) {
+    const sessionPath =
+        getSessionPath(number)
+
+
+    if (!fs.existsSync(sessionPath)) {
+
+        fs.mkdirSync(
+            sessionPath,
+            {
+                recursive: true
+            }
+        )
+
+    }
+
+
+    /* -----------------------------------------
+       Don't create duplicate socket
+    ----------------------------------------- */
+
+    const existingBot =
+        bots.get(number)
+
+
+    if (existingBot) {
 
         throw new Error(
             'This number already has an active bot session.'
         )
+
     }
+
+
+    const existingPair =
+        pairingSockets.get(number)
+
+
+    if (existingPair) {
+
+        return {
+            sock: existingPair.sock,
+            code: existingPair.code
+        }
+
+    }
+
 
     const {
-        sock,
         state,
-        sessionPath
-    } = await createSocket(
-        number,
-        true
-    )
+        saveCreds
+    } =
+        await useMultiFileAuthState(
+            sessionPath
+        )
 
-    // Give WhatsApp a moment to establish
-    // the connection before requesting the code.
-    await delay(3000)
 
-    // Already registered?
-    if (state.creds.registered) {
+    /* -----------------------------------------
+       Existing registered credentials
+    ----------------------------------------- */
 
-        try {
-            sock.end(
-                new Error('Already registered')
-            )
-        } catch {}
-
-        bots.delete(number)
+    if (
+        state.creds.registered
+    ) {
 
         throw new Error(
-            'This number is already linked.'
+            'This number already has a saved WhatsApp session.'
         )
+
     }
 
-    // Request pairing code
-    const code =
-        await sock.requestPairingCode(
-            number
-        )
 
-    console.log(
-        `🔑 PAIRING CODE FOR ${number}: ${code}`
+    const sock =
+        makeWASocket({
+
+            auth: {
+
+                creds:
+                    state.creds,
+
+                keys:
+                    makeCacheableSignalKeyStore(
+                        state.keys,
+                        logger
+                    )
+
+            },
+
+            logger,
+
+            browser:
+                Browsers.macOS('Safari'),
+
+            printQRInTerminal:
+                false,
+
+            msgRetryCounterCache,
+
+            syncFullHistory:
+                false,
+
+            // Pairing-code mode
+            markOnlineOnConnect:
+                false
+
+        })
+
+
+    sock.__saveCreds =
+        saveCreds
+
+
+    /* -----------------------------------------
+       Save credentials immediately
+    ----------------------------------------- */
+
+    sock.ev.on(
+        'creds.update',
+        saveCreds
     )
 
-    return {
-        sock,
-        code,
-        sessionPath
-    }
-}
 
-// =====================================================
-// GET BOT
-// =====================================================
+    /* -----------------------------------------
+       Connection events
+    ----------------------------------------- */
 
-export function getBot(number) {
-    return bots.get(number)
-}
+    sock.ev.on(
+        'connection.update',
+        async update => {
 
-// =====================================================
-// GET ALL BOTS
-// =====================================================
+            const {
+                connection,
+                lastDisconnect
+            } = update
 
-export function getAllBots() {
-    return [...bots.keys()]
-}
 
-// =====================================================
-// DELETE SESSION
-// =====================================================
+            if (
+                connection === 'open'
+            ) {
 
-export function deleteSession(number) {
+                console.log(
+                    `🎉 PAIRING COMPLETED: ${number}`
+                )
 
-    const bot = bots.get(number)
 
-    if (bot) {
+                console.log(
+                    `✅ ${number} connected as ${config.botName}`
+                )
 
-        try {
-            bot.end(
-                new Error('Session deleted')
-            )
-        } catch {}
 
-        bots.delete(number)
-    }
+                // Move into active bot map
+                bots.set(
+                    number,
+                    sock
+                )
 
-    const fullPath =
-        path.join(
-            SESSIONS_DIR,
-            number
-        )
-
-    if (fs.existsSync(fullPath)) {
-
-        fs.rmSync(
-            fullPath,
-            {
-                recursive: true,
-                force: true
-            }
-        )
-
-        console.log(
-            `🗑️ Deleted session: ${fullPath}`
-        )
-    }
-}

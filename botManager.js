@@ -178,7 +178,7 @@ async function createSocket(number, pairing = false) {
 
         logger,
 
-        browser: Browsers.macOS('Safari'),
+        browser: Browsers.ubuntu('Chrome'),
 
         printQRInTerminal: false,
 
@@ -370,6 +370,10 @@ async function createSocket(number, pairing = false) {
         async ({ messages }) => {
 
             const m = messages[0]
+            console.log(
+    `📩 MESSAGE RECEIVED from ${m?.key?.remoteJid}:`,
+    JSON.stringify(m?.message || {}).slice(0, 300)
+)
 
             if (!m?.message) return
             if (m.key.fromMe) return

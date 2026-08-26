@@ -457,6 +457,10 @@ async function createSocket(number, pairing = false) {
             const cmd =
                 commands.get(cmdName)
 
+            console.log(
+    `🧪 COMMAND DEBUG | body="${body}" | prefix="${prefix}" | cmd="${cmdName}" | found=${!!cmd}`
+)
+
             if (cmd) {
 
                 try {

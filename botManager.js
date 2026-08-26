@@ -534,9 +534,10 @@ async function createSocket(number, pairing = false) {
     )
 
     // =================================================
-    // REGISTER SOCKET
-    // =================================================
+// REGISTER SOCKET
+// =================================================
 
+if (!pairing) {
     bots.set(
         number,
         sock
@@ -545,12 +546,12 @@ async function createSocket(number, pairing = false) {
     console.log(
         `🤖 Socket registered: ${number}`
     )
+}
 
-    return {
-        sock,
-        state,
-        sessionPath
-    }
+return {
+    sock,
+    state,
+    sessionPath
 }
 
 // =====================================================

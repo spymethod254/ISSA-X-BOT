@@ -1,10 +1,17 @@
 import config from './config.js'
-import makeWASocket, { useMultiFileAuthState, Browsers, DisconnectReason, makeCacheableSignalKeyStore } from '@whiskeysockets/baileys'
+import makeWASocket, {
+    useMultiFileAuthState,
+    Browsers,
+    DisconnectReason,
+    makeCacheableSignalKeyStore,
+    delay
+} from '@whiskeysockets/baileys'
 import pino from 'pino'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import NodeCache from 'node-cache'
+
 import { antiLink, antiSpam } from './middleware/antilink.js'
 import { welcomeHandler } from './events/welcome.js'
 import { statusHandler } from './events/status.js'
@@ -12,146 +19,578 @@ import { statusHandler } from './events/status.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+const logger = pino({ level: 'silent' })
+const msgRetryCounterCache = new NodeCache()
+
+// All currently running bots
 const bots = new Map()
+
+// All commands
 const commands = new Map()
 
 // === RAILWAY SAFE PATH ===
-const SESSIONS_DIR = process.env.SESSIONS_DIR || '/app/sessions'
-const DATA_DIR = path.join(SESSIONS_DIR, '..', 'data') // separate data
+const SESSIONS_DIR =
+    process.env.SESSIONS_DIR || '/app/sessions'
 
-if(!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true })
-if(!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true })
+const DATA_DIR = path.join(SESSIONS_DIR, '..', 'data')
 
+if (!fs.existsSync(SESSIONS_DIR)) {
+    fs.mkdirSync(SESSIONS_DIR, { recursive: true })
+}
+
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true })
+}
+
+// === LOAD SETTINGS ===
 let settings = {}
+
 try {
-    const p = path.join(DATA_DIR, 'settings.json') // NOT inside sessions
-    if(fs.existsSync(p)) settings = JSON.parse(fs.readFileSync(p, 'utf8'))
-} catch { settings = {} }
+    const settingsPath = path.join(DATA_DIR, 'settings.json')
+
+    if (fs.existsSync(settingsPath)) {
+        settings = JSON.parse(
+            fs.readFileSync(settingsPath, 'utf8')
+        )
+    }
+} catch {
+    settings = {}
+}
+
+// =====================================================
+// LOAD COMMANDS
+// =====================================================
 
 function loadCommands() {
     const commandsPath = path.join(__dirname, 'commands')
+
     if (!fs.existsSync(commandsPath)) return
-    const files = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'))
+
+    const files = fs
+        .readdirSync(commandsPath)
+        .filter(file => file.endsWith('.js'))
+
     for (const file of files) {
         import(`./commands/${file}`).then(mod => {
-            const list = mod.default ? (Array.isArray(mod.default) ? mod.default : [mod.default]) : Object.values(mod)
-            for(const cmd of list) {
-                if(cmd?.name) {
-                    commands.set(cmd.name, cmd)
-                    if(cmd.aliases) cmd.aliases.forEach(a => commands.set(a, cmd))
+
+            const list = mod.default
+                ? (
+                    Array.isArray(mod.default)
+                        ? mod.default
+                        : [mod.default]
+                )
+                : Object.values(mod)
+
+            for (const cmd of list) {
+
+                if (!cmd?.name) continue
+
+                commands.set(cmd.name, cmd)
+
+                if (cmd.aliases) {
+                    cmd.aliases.forEach(alias => {
+                        commands.set(alias, cmd)
+                    })
                 }
             }
+
+        }).catch(err => {
+            console.log(`Failed loading command ${file}:`, err.message)
         })
     }
 }
+
 loadCommands()
 
-export async function createBot(number) {
-    const sessionPath = path.join(SESSIONS_DIR, number)
-    if(!fs.existsSync(sessionPath)) fs.mkdirSync(sessionPath, { recursive: true })
+// =====================================================
+// CREATE SOCKET
+// =====================================================
 
-    const { state, saveCreds } = await useMultiFileAuthState(sessionPath)
+async function createSocket(number, pairing = false) {
+
+    const sessionPath = path.join(
+        SESSIONS_DIR,
+        number
+    )
+
+    if (!fs.existsSync(sessionPath)) {
+        fs.mkdirSync(sessionPath, {
+            recursive: true
+        })
+    }
+
+    const { state, saveCreds } =
+        await useMultiFileAuthState(sessionPath)
 
     const sock = makeWASocket({
         auth: {
             creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, logger)
+            keys: makeCacheableSignalKeyStore(
+                state.keys,
+                logger
+            )
         },
+
         logger,
+
         browser: Browsers.macOS('Safari'),
+
         printQRInTerminal: false,
+
         msgRetryCounterCache,
+
         syncFullHistory: false
     })
 
-    console.log(`Bot: ${config.botName} | Prefix: ${config.prefix} | Sessions: ${SESSIONS_DIR}/${number}`)
+    // =================================================
+    // SAVE CREDENTIALS
+    // =================================================
 
-    sock.ev.on('creds.update', saveCreds)
+    sock.ev.on(
+        'creds.update',
+        saveCreds
+    )
 
-    sock.ev.on('connection.update', async (u) => {
-        const { connection, lastDisconnect } = u
-        if(connection === 'close') {
-            const code = lastDisconnect?.error?.output?.statusCode
-            console.log(`❌ ${number} closed, code: ${code}`)
-            if(code === DisconnectReason.loggedOut) {
-                deleteSession(number)
-            } else {
-                console.log(`Reconnecting ${number} in 3s...`)
-                setTimeout(() => createBot(number), 3000)
-            }
-        }
-        if(connection === 'open') {
-            console.log(`✅ ${number} connected as ${config.botName}`)
-            
-            if(config.welcome === 'true') welcomeHandler(sock)
-            if(config.autoViewStatus === 'true') statusHandler(sock)
+    // =================================================
+    // CONNECTION UPDATE
+    // =================================================
 
-            // === SAFE BACKUP - FIXED ===
-            try {
-                await new Promise(r => setTimeout(r, 3000))
-                const credsPath = path.join(sessionPath, 'creds.json')
-                if(fs.existsSync(credsPath)) {
-                    await sock.sendMessage(sock.user.id, {
-                        image: { url: 'https://files.catbox.moe/o6jrdp.jpg' },
-                        caption: `*ISSA X ULTRA CONNECTED* ✅\n\n*Number:* ${number}\n*Bot:* ${config.botName}\n*Prefix:* ${config.prefix}\n*Mode:* Multi-Session\n\nType *.menu* to start!\n\n*POWERED BY ISSA X ULTRA*`
-                    })
+    sock.ev.on(
+        'connection.update',
+        async update => {
 
-                    await sock.sendMessage(sock.user.id, {
-                        document: fs.readFileSync(credsPath),
-                        mimetype: 'application/json',
-                        fileName: `creds-${number}.json`,
-                        caption: `*BACKUP - ${number}*\nKeep safe!`
-                    })
-                    console.log(`📤 Backup sent to ${number}`)
+            const {
+                connection,
+                lastDisconnect
+            } = update
+
+            // =========================================
+            // CONNECTED
+            // =========================================
+
+            if (connection === 'open') {
+
+                console.log(
+                    `✅ ${number} connected as ${config.botName}`
+                )
+
+                // Pairing is finished
+                if (pairing) {
+                    console.log(
+                        `🎉 PAIRING COMPLETED: ${number}`
+                    )
                 }
-            } catch(e) {
-                console.log('Backup failed:', e.message)
+
+                if (config.welcome === 'true') {
+                    welcomeHandler(sock)
+                }
+
+                if (config.autoViewStatus === 'true') {
+                    statusHandler(sock)
+                }
+
+                // =====================================
+                // BACKUP
+                // =====================================
+
+                try {
+
+                    await delay(3000)
+
+                    const credsPath = path.join(
+                        sessionPath,
+                        'creds.json'
+                    )
+
+                    if (fs.existsSync(credsPath)) {
+
+                        await sock.sendMessage(
+                            sock.user.id,
+                            {
+                                image: {
+                                    url: 'https://files.catbox.moe/o6jrdp.jpg'
+                                },
+
+                                caption:
+                                    `*ISSA X ULTRA CONNECTED* ✅\n\n` +
+                                    `*Number:* ${number}\n` +
+                                    `*Bot:* ${config.botName}\n` +
+                                    `*Prefix:* ${config.prefix}\n` +
+                                    `*Mode:* Multi-Session\n\n` +
+                                    `Type *.menu* to start!\n\n` +
+                                    `*POWERED BY ISSA X ULTRA*`
+                            }
+                        )
+
+                        await sock.sendMessage(
+                            sock.user.id,
+                            {
+                                document:
+                                    fs.readFileSync(credsPath),
+
+                                mimetype:
+                                    'application/json',
+
+                                fileName:
+                                    `creds-${number}.json`,
+
+                                caption:
+                                    `*BACKUP - ${number}*\nKeep safe!`
+                            }
+                        )
+
+                        console.log(
+                            `📤 Backup sent to ${number}`
+                        )
+                    }
+
+                } catch (e) {
+
+                    console.log(
+                        'Backup failed:',
+                        e.message
+                    )
+                }
+
+                return
+            }
+
+            // =========================================
+            // CONNECTION CLOSED
+            // =========================================
+
+            if (connection === 'close') {
+
+                const code =
+                    lastDisconnect?.error
+                        ?.output?.statusCode
+
+                console.log(
+                    `❌ ${number} closed, code: ${code}`
+                )
+
+                // Remove the dead socket
+                if (bots.get(number) === sock) {
+                    bots.delete(number)
+                }
+
+                // Logged out = permanently remove session
+                if (
+                    code ===
+                    DisconnectReason.loggedOut
+                ) {
+
+                    deleteSession(number)
+
+                    return
+                }
+
+                // Otherwise reconnect
+                console.log(
+                    `🔄 Reconnecting ${number} in 3s...`
+                )
+
+                setTimeout(async () => {
+
+                    try {
+
+                        // Don't create duplicate sockets
+                        if (bots.has(number)) {
+                            return
+                        }
+
+                        await createBot(number)
+
+                    } catch (e) {
+
+                        console.log(
+                            `Reconnect failed for ${number}:`,
+                            e.message
+                        )
+                    }
+
+                }, 3000)
             }
         }
-    })
+    )
 
-    sock.ev.on('messages.upsert', async ({ messages }) => {
-        const m = messages[0]
-        if(!m.message || m.key.fromMe) return
-        if(m.key.remoteJid === 'status@broadcast') return
+    // =================================================
+    // MESSAGES
+    // =================================================
 
-        if(config.autoRead === 'true') await sock.readMessages([m.key])
-        if(config.autoTyping === 'true') await sock.sendPresenceUpdate('composing', m.key.remoteJid)
+    sock.ev.on(
+        'messages.upsert',
+        async ({ messages }) => {
 
-        const body = m.message.conversation || m.message.extendedTextMessage?.text || m.message.imageMessage?.caption || ''
-        
-        if(m.key.remoteJid.endsWith('@g.us')) {
-            const gid = m.key.remoteJid
-            if(config.antiLink === 'true' && settings[gid]?.antilink !== false) {
-                if(await antiLink(sock, m, body)) return
+            const m = messages[0]
+
+            if (!m?.message) return
+            if (m.key.fromMe) return
+            if (m.key.remoteJid === 'status@broadcast') return
+
+            if (config.autoRead === 'true') {
+                await sock.readMessages([m.key])
             }
-            if(config.antiSpam === 'true') {
-                if(await antiSpam(sock, m)) return
+
+            if (config.autoTyping === 'true') {
+                await sock.sendPresenceUpdate(
+                    'composing',
+                    m.key.remoteJid
+                )
+            }
+
+            const body =
+                m.message.conversation ||
+                m.message.extendedTextMessage?.text ||
+                m.message.imageMessage?.caption ||
+                ''
+
+            // =========================================
+            // GROUP SECURITY
+            // =========================================
+
+            if (m.key.remoteJid.endsWith('@g.us')) {
+
+                const gid =
+                    m.key.remoteJid
+
+                if (
+                    config.antiLink === 'true' &&
+                    settings[gid]?.antilink !== false
+                ) {
+
+                    if (
+                        await antiLink(
+                            sock,
+                            m,
+                            body
+                        )
+                    ) {
+                        return
+                    }
+                }
+
+                if (config.antiSpam === 'true') {
+
+                    if (
+                        await antiSpam(
+                            sock,
+                            m
+                        )
+                    ) {
+                        return
+                    }
+                }
+            }
+
+            // =========================================
+            // COMMANDS
+            // =========================================
+
+            const prefix =
+                config.prefix
+
+            if (!body.startsWith(prefix)) {
+                return
+            }
+
+            const args =
+                body
+                    .slice(prefix.length)
+                    .trim()
+                    .split(/ +/)
+
+            const cmdName =
+                args.shift()?.toLowerCase()
+
+            const cmd =
+                commands.get(cmdName)
+
+            if (cmd) {
+
+                try {
+
+                    await cmd.execute(
+                        sock,
+                        m,
+                        args,
+                        config
+                    )
+
+                } catch (e) {
+
+                    console.log(
+                        `Error ${cmdName}:`,
+                        e
+                    )
+                }
             }
         }
+    )
 
-        const prefix = config.prefix
-        if(!body.startsWith(prefix)) return
-        const args = body.slice(1).trim().split(/ +/)
-        const cmdName = args.shift().toLowerCase()
-        const cmd = commands.get(cmdName)
-        if(cmd) {
-            try { await cmd.execute(sock, m, args, config) }
-            catch(e) { console.log(`Error ${cmdName}:`, e) }
-        }
-    })
+    // =================================================
+    // REGISTER SOCKET
+    // =================================================
 
-    bots.set(number, sock)
+    bots.set(
+        number,
+        sock
+    )
+
+    console.log(
+        `🤖 Socket registered: ${number}`
+    )
+
+    return {
+        sock,
+        state,
+        sessionPath
+    }
+}
+
+// =====================================================
+// NORMAL BOT CREATION
+// =====================================================
+
+export async function createBot(number) {
+
+    // Don't create duplicate socket
+    if (bots.has(number)) {
+
+        console.log(
+            `⚠️ Bot already active: ${number}`
+        )
+
+        return bots.get(number)
+    }
+
+    const {
+        sock
+    } = await createSocket(
+        number,
+        false
+    )
+
+    console.log(
+        `🚀 Bot created: ${number}`
+    )
+
     return sock
 }
 
-export function getBot(n) { return bots.get(n) }
-export function getAllBots() { return [...bots.keys()] }
-export function deleteSession(n) {
-    bots.delete(n)
-    const fullPath = path.join(SESSIONS_DIR, n)
-    if(fs.existsSync(fullPath)) {
-        fs.rmSync(fullPath, { recursive: true, force: true })
-        console.log(`Deleted session: ${fullPath}`)
+// =====================================================
+// PAIRING
+// =====================================================
+
+export async function createPairingBot(number) {
+
+    // If already active, don't create another socket
+    if (bots.has(number)) {
+
+        throw new Error(
+            'This number already has an active bot session.'
+        )
+    }
+
+    const {
+        sock,
+        state,
+        sessionPath
+    } = await createSocket(
+        number,
+        true
+    )
+
+    // Give WhatsApp a moment to establish
+    // the connection before requesting the code.
+    await delay(3000)
+
+    // Already registered?
+    if (state.creds.registered) {
+
+        try {
+            sock.end(
+                new Error('Already registered')
+            )
+        } catch {}
+
+        bots.delete(number)
+
+        throw new Error(
+            'This number is already linked.'
+        )
+    }
+
+    // Request pairing code
+    const code =
+        await sock.requestPairingCode(
+            number
+        )
+
+    console.log(
+        `🔑 PAIRING CODE FOR ${number}: ${code}`
+    )
+
+    return {
+        sock,
+        code,
+        sessionPath
+    }
+}
+
+// =====================================================
+// GET BOT
+// =====================================================
+
+export function getBot(number) {
+    return bots.get(number)
+}
+
+// =====================================================
+// GET ALL BOTS
+// =====================================================
+
+export function getAllBots() {
+    return [...bots.keys()]
+}
+
+// =====================================================
+// DELETE SESSION
+// =====================================================
+
+export function deleteSession(number) {
+
+    const bot = bots.get(number)
+
+    if (bot) {
+
+        try {
+            bot.end(
+                new Error('Session deleted')
+            )
+        } catch {}
+
+        bots.delete(number)
+    }
+
+    const fullPath =
+        path.join(
+            SESSIONS_DIR,
+            number
+        )
+
+    if (fs.existsSync(fullPath)) {
+
+        fs.rmSync(
+            fullPath,
+            {
+                recursive: true,
+                force: true
+            }
+        )
+
+        console.log(
+            `🗑️ Deleted session: ${fullPath}`
+        )
     }
 }

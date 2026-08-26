@@ -13,7 +13,6 @@ const router = express.Router()
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// Railway persistent path
 const SESSIONS_DIR =
     process.env.SESSIONS_DIR ||
     (
@@ -23,23 +22,22 @@ const SESSIONS_DIR =
     )
 
 if (!fs.existsSync(SESSIONS_DIR)) {
-    fs.mkdirSync(SESSIONS_DIR, {
-        recursive: true
-    })
+    fs.mkdirSync(
+        SESSIONS_DIR,
+        {
+            recursive: true
+        }
+    )
 }
 
-// Keep track of pairing requests.
-// number -> { code, time }
-const pairingSessions = new Map()
 
-// =====================================================
-// GET /pair
-// POST /pair
-// =====================================================
+// number -> { code, time }
+const activePairings = new Map()
+
 
 router.all('/', async (req, res) => {
 
-    let num =
+    const number =
         (
             req.query.number ||
             req.body?.number ||
@@ -47,11 +45,12 @@ router.all('/', async (req, res) => {
         )
         .replace(/[^0-9]/g, '')
 
-    // =================================================
-    // VALIDATE NUMBER
-    // =================================================
 
-    if (!num || num.length < 10) {
+    // =====================================================
+    // VALIDATE NUMBER
+    // =====================================================
+
+    if (!number || number.length < 10) {
 
         return res.status(400).json({
             error:
@@ -59,108 +58,112 @@ router.all('/', async (req, res) => {
         })
     }
 
-    // =================================================
-    // DON'T CREATE DUPLICATE PAIRING REQUESTS
-    // =================================================
 
-    const existingPair =
-        pairingSessions.get(num)
+    // =====================================================
+    // EXISTING ACTIVE BOT
+    // =====================================================
 
-    if (existingPair) {
-
-        const age =
-            Date.now() - existingPair.time
-
-        // Keep existing code for 60 seconds
-        if (age < 60000) {
-
-            return res.json({
-                code: existingPair.code,
-                message:
-                    "Use the existing code. Don't request another one."
-            })
-        }
-
-        pairingSessions.delete(num)
-    }
-
-    // =================================================
-    // CHECK IF BOT IS ALREADY ACTIVE
-    // =================================================
-
-    const existingBot =
-        getBot(num)
-
-    if (existingBot) {
+    if (getBot(number)) {
 
         return res.status(409).json({
             error:
-                'This number already has an active bot session.',
-            number: num
+                'This number already has an active bot session.'
         })
     }
 
-    // =================================================
-    // CHECK SAVED SESSION
-    // =================================================
+
+    // =====================================================
+    // EXISTING PAIRING CODE
+    // =====================================================
+
+    const existing =
+        activePairings.get(number)
+
+
+    if (existing) {
+
+        if (
+            Date.now() - existing.time <
+            120000
+        ) {
+
+            return res.json({
+                code: existing.code,
+                message:
+                    "Use that code! Don't request again."
+            })
+        }
+
+        activePairings.delete(number)
+    }
+
+
+    // =====================================================
+    // EXISTING SAVED SESSION
+    // =====================================================
 
     const sessionDir =
         path.join(
             SESSIONS_DIR,
-            num
+            number
         )
 
-    const credsPath =
-        path.join(
-            sessionDir,
-            'creds.json'
-        )
 
-    if (fs.existsSync(credsPath)) {
+    if (fs.existsSync(sessionDir)) {
 
-        try {
-
-            const creds =
-                JSON.parse(
-                    fs.readFileSync(
-                        credsPath,
-                        'utf8'
-                    )
-                )
-
-            if (creds.registered) {
-
-                return res.status(409).json({
-                    error:
-                        'This number already has a saved WhatsApp session.',
-                    message:
-                        'Delete the existing session from /bots/:number before pairing again.',
-                    number: num
-                })
-            }
-
-        } catch (e) {
-
-            console.log(
-                `⚠️ Could not read credentials for ${num}:`,
-                e.message
+        const credsPath =
+            path.join(
+                sessionDir,
+                'creds.json'
             )
+
+
+        if (fs.existsSync(credsPath)) {
+
+            try {
+
+                const creds =
+                    JSON.parse(
+                        fs.readFileSync(
+                            credsPath,
+                            'utf8'
+                        )
+                    )
+
+
+                if (creds.registered) {
+
+                    return res.status(409).json({
+                        error:
+                            'This number already has a saved WhatsApp session. Delete the old session first.'
+                    })
+                }
+
+            } catch {}
+
         }
     }
 
-    // =================================================
-    // CREATE PAIRING BOT
-    // =================================================
+
+    // =====================================================
+    // CREATE PAIRING SOCKET
+    // =====================================================
 
     try {
 
         console.log(
-            `🔐 Starting pairing for ${num}...`
+            `🔐 Starting pairing for ${number}...`
         )
 
+
         const {
+            sock,
             code
-        } = await createPairingBot(num)
+        } =
+            await createPairingBot(
+                number
+            )
+
 
         const formattedCode =
             code
@@ -168,66 +171,138 @@ router.all('/', async (req, res) => {
                 ?.join('-') ||
             code
 
+
         console.log(
-            `🔑 CODE FOR ${num}: ${formattedCode}`
+            `🔑 PAIRING CODE FOR ${number}: ${formattedCode}`
         )
 
-        pairingSessions.set(
-            num,
+
+        activePairings.set(
+            number,
             {
+                sock,
                 code: formattedCode,
                 time: Date.now()
             }
         )
 
+
         // =================================================
-        // REMOVE PAIRING LOCK AFTER 2 MINUTES
+        // PAIRING COMPLETED
         // =================================================
 
-        setTimeout(() => {
+        const checkConnection =
+            () => {
 
-            const current =
-                pairingSessions.get(num)
+                const session =
+                    activePairings.get(
+                        number
+                    )
 
-            if (
-                current &&
-                current.code === formattedCode
-            ) {
 
-                pairingSessions.delete(num)
+                if (!session) {
+                    return
+                }
 
-                console.log(
-                    `⏰ Pairing request expired: ${num}`
-                )
+
+                if (
+                    sock.authState?.creds?.registered
+                ) {
+
+                    activePairings.delete(
+                        number
+                    )
+
+                    console.log(
+                        `✅ Pairing completed for ${number}`
+                    )
+                }
             }
 
-        }, 120000)
+
+        sock.ev.on(
+            'connection.update',
+            checkConnection
+        )
+
+
+        // =================================================
+        // 120 SECOND TIMEOUT
+        // =================================================
+
+        setTimeout(
+            () => {
+
+                const session =
+                    activePairings.get(
+                        number
+                    )
+
+
+                if (!session) {
+                    return
+                }
+
+
+                activePairings.delete(
+                    number
+                )
+
+
+                try {
+
+                    if (
+                        !sock.authState?.creds?.registered
+                    ) {
+
+                        sock.end(
+                            new Error(
+                                'Pairing timeout'
+                            )
+                        )
+
+                        console.log(
+                            `⏰ Pairing timeout for ${number}`
+                        )
+
+                    }
+
+                } catch {}
+
+            },
+            120000
+        )
+
 
         return res.json({
-            success: true,
             code: formattedCode,
-            number: num,
             message:
-                'Enter this code in WhatsApp → Linked Devices → Link a device → Link with phone number.'
+                'Pairing code generated successfully.'
         })
+
 
     } catch (err) {
 
         console.error(
-            `❌ PAIR ERROR FOR ${num}:`,
+            `❌ PAIR ERROR FOR ${number}:`,
             err
         )
 
-        pairingSessions.delete(num)
+
+        activePairings.delete(
+            number
+        )
+
 
         return res.status(503).json({
             error:
                 err.message ||
-                'Failed to generate pairing code.',
-            message:
-                'Wait a moment and try again.'
+                'Failed to generate pairing code.'
         })
+
     }
+
 })
+
 
 export default router

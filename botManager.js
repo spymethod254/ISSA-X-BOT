@@ -140,6 +140,8 @@ async function createSocket(number, pairing = false) {
         msgRetryCounterCache,
 
         syncFullHistory: false
+
+        usePairingCode: pairing
     })
 
     // =================================================

@@ -61,17 +61,37 @@ try {
 // LOAD COMMANDS
 // =====================================================
 
-function loadCommands() {
-    const commandsPath = path.join(__dirname, 'commands')
+async function loadCommands() {
 
-    if (!fs.existsSync(commandsPath)) return
+    const commandsPath = path.join(
+        __dirname,
+        'commands'
+    )
+
+    if (!fs.existsSync(commandsPath)) {
+        console.log(
+            '❌ Commands folder not found:',
+            commandsPath
+        )
+        return
+    }
 
     const files = fs
         .readdirSync(commandsPath)
         .filter(file => file.endsWith('.js'))
 
+    console.log(
+        `📦 Loading ${files.length} command files...`
+    )
+
     for (const file of files) {
-        import(`./commands/${file}`).then(mod => {
+
+        try {
+
+            const mod =
+                await import(
+                    `./commands/${file}`
+                )
 
             const list = mod.default
                 ? (
@@ -81,26 +101,51 @@ function loadCommands() {
                 )
                 : Object.values(mod)
 
+            let loaded = 0
+
             for (const cmd of list) {
 
                 if (!cmd?.name) continue
 
-                commands.set(cmd.name, cmd)
+                commands.set(
+                    cmd.name.toLowerCase(),
+                    cmd
+                )
 
                 if (cmd.aliases) {
-                    cmd.aliases.forEach(alias => {
-                        commands.set(alias, cmd)
-                    })
+
+                    for (const alias of cmd.aliases) {
+
+                        commands.set(
+                            alias.toLowerCase(),
+                            cmd
+                        )
+                    }
                 }
+
+                loaded++
             }
 
-        }).catch(err => {
-            console.log(`Failed loading command ${file}:`, err.message)
-        })
+            console.log(
+                `✅ Loaded ${file} (${loaded} command${loaded === 1 ? '' : 's'})`
+            )
+
+        } catch (err) {
+
+            console.log(
+                `❌ Failed loading ${file}:`,
+                err.message
+            )
+        }
     }
+
+    console.log(
+        `🔥 Command system ready: ${commands.size} command names loaded`
+    )
 }
 
-loadCommands()
+// Wait for all commands before continuing
+await loadCommands()
 
 // =====================================================
 // CREATE SOCKET

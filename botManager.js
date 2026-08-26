@@ -362,9 +362,10 @@ async function createSocket(number, pairing = false) {
     )
 
     // =================================================
-    // MESSAGES
-    // =================================================
-    sock.ev.on(
+// MESSAGES
+// =================================================
+
+sock.ev.on(
     'messages.upsert',
     async ({ messages }) => {
 
@@ -379,11 +380,17 @@ async function createSocket(number, pairing = false) {
             if (m.key.fromMe) continue
             if (m.key.remoteJid === 'status@broadcast') continue
 
-            // ... keep the rest of your handler here
+            // =========================================
+            // AUTO READ
+            // =========================================
 
             if (config.autoRead === 'true') {
                 await sock.readMessages([m.key])
             }
+
+            // =========================================
+            // AUTO TYPING
+            // =========================================
 
             if (config.autoTyping === 'true') {
                 await sock.sendPresenceUpdate(
@@ -392,17 +399,20 @@ async function createSocket(number, pairing = false) {
                 )
             }
 
+            // =========================================
+            // GET MESSAGE TEXT
+            // =========================================
+
             const body =
                 m.message.conversation ||
                 m.message.extendedTextMessage?.text ||
                 m.message.imageMessage?.caption ||
                 ''
 
-console.log(`📝 BODY DEBUG: "${body}"`)
+            console.log(
+                `📝 BODY DEBUG: "${body}"`
+            )
 
-          }
-    }
-)
             // =========================================
             // GROUP SECURITY
             // =========================================
@@ -424,7 +434,7 @@ console.log(`📝 BODY DEBUG: "${body}"`)
                             body
                         )
                     ) {
-                        return
+                        continue
                     }
                 }
 
@@ -436,7 +446,7 @@ console.log(`📝 BODY DEBUG: "${body}"`)
                             m
                         )
                     ) {
-                        return
+                        continue
                     }
                 }
             }
@@ -449,7 +459,7 @@ console.log(`📝 BODY DEBUG: "${body}"`)
                 config.prefix
 
             if (!body.startsWith(prefix)) {
-                return
+                continue
             }
 
             const args =
@@ -465,8 +475,12 @@ console.log(`📝 BODY DEBUG: "${body}"`)
                 commands.get(cmdName)
 
             console.log(
-    `🧪 COMMAND DEBUG | body="${body}" | prefix="${prefix}" | cmd="${cmdName}" | found=${!!cmd}`
-)
+                `🧪 COMMAND DEBUG | body="${body}" | prefix="${prefix}" | cmd="${cmdName}" | found=${!!cmd}`
+            )
+
+            // =========================================
+            // EXECUTE COMMAND
+            // =========================================
 
             if (cmd) {
 
@@ -482,13 +496,24 @@ console.log(`📝 BODY DEBUG: "${body}"`)
                 } catch (e) {
 
                     console.log(
-                        `Error ${cmdName}:`,
+                        `❌ Error executing ${cmdName}:`,
                         e
+                    )
+
+                    await sock.sendMessage(
+                        m.key.remoteJid,
+                        {
+                            text: '❌ An error occurred while executing this command.'
+                        },
+                        {
+                            quoted: m
+                        }
                     )
                 }
             }
         }
-    )
+    }
+)
 
     // =================================================
     // REGISTER SOCKET

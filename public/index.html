@@ -4,173 +4,580 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ISSA X ULTRA - Pair Site</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Poppins:wght@300;400;600&display=swap');
-body { font-family: 'Poppins', sans-serif; background: #050507; }
-.orbitron { font-family: 'Orbitron', sans-serif; }
-.glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-.neon { box-shadow: 0 0 20px rgba(168,85,247,0.5); }
-.pulse { animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #050507;
+}
+
+.orbitron {
+    font-family: 'Orbitron', sans-serif;
+}
+
+.glass {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.neon {
+    box-shadow: 0 0 20px rgba(168,85,247,0.5);
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%,100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
 </style>
 </head>
+
 <body class="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+
 <div class="absolute top-[-200px] left-[-200px] w-[600px] h-[600px] bg-purple-600 rounded-full blur-[120px] opacity-30"></div>
+
 <div class="absolute bottom-[-200px] right-[-200px] w-[600px] h-[600px] bg-blue-600 rounded-full blur-[120px] opacity-30"></div>
 
+
 <div class="w-full max-w-md z-10">
+
+    <!-- HEADER -->
     <div class="text-center mb-8">
+
         <div class="w-20 h-20 mx-auto bg-gradient-to-br from-purple-600 to-blue-500 rounded-2xl flex items-center justify-center neon mb-4">
             <i class="fas fa-bolt text-3xl text-white"></i>
         </div>
-        <h1 class="orbitron text-3xl font-800 text-white tracking-wider">ISSA X <span class="text-purple-400">ULTRA</span></h1>
-        <p class="text-gray-400 text-sm mt-2">Multi-Device WhatsApp Bot • 2026</p>
+
+        <h1 class="orbitron text-3xl font-800 text-white tracking-wider">
+            ISSA X <span class="text-purple-400">ULTRA</span>
+        </h1>
+
+        <p class="text-gray-400 text-sm mt-2">
+            Multi-Device WhatsApp Bot • 2026
+        </p>
+
         <div class="flex items-center justify-center gap-2 mt-3">
             <span class="w-2 h-2 bg-green-400 rounded-full pulse"></span>
-            <span id="botCount" class="text-green-400 text-xs">Loading...</span>
+            <span id="botCount" class="text-green-400 text-xs">
+                Loading...
+            </span>
         </div>
+
     </div>
 
+
+    <!-- PAIR CARD -->
     <div class="glass rounded-[20px] p-6 neon">
-        <h2 class="text-white font-semibold mb-1">Link Your WhatsApp</h2>
-        <p class="text-gray-400 text-xs mb-5">Enter number with country code (no +) <span id="flag">🌍</span></p>
 
+        <h2 class="text-white font-semibold mb-1">
+            Link Your WhatsApp
+        </h2>
+
+        <p class="text-gray-400 text-xs mb-5">
+            Enter number with country code (no +)
+            <span id="flag">🌍</span>
+        </p>
+
+
+        <!-- NUMBER -->
         <div class="relative mb-4">
-            <span class="absolute left-4 top-3.5 text-gray-400"><i class="fab fa-whatsapp text-xl"></i></span>
-            <input id="number" type="text" placeholder="2547XXXXXXXX" oninput="checkFlag(this.value)" class="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition">
+
+            <span class="absolute left-4 top-3.5 text-gray-400">
+                <i class="fab fa-whatsapp text-xl"></i>
+            </span>
+
+            <input
+                id="number"
+                type="text"
+                placeholder="2547XXXXXXXX"
+                oninput="checkFlag(this.value)"
+                class="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition"
+            >
+
         </div>
 
-        <button id="pairBtn" onclick="pair()" class="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold py-3.5 rounded-xl hover:opacity-90 transition flex items-center justify-center gap-2">
-            <i class="fas fa-link"></i> <span id="btnText">Get Pair Code</span>
+
+        <!-- PAIR BUTTON -->
+        <button
+            id="pairBtn"
+            onclick="pair()"
+            class="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold py-3.5 rounded-xl hover:opacity-90 transition flex items-center justify-center gap-2"
+        >
+            <i class="fas fa-link"></i>
+            <span id="btnText">Get Pair Code</span>
         </button>
 
-        <!-- NEW: Delete button - fixes "Already linked" -->
-        <button id="deleteBtn" onclick="deleteSession()" class="hidden w-full mt-3 bg-red-500/20 border border-red-500/30 text-red-400 font-medium py-2.5 rounded-xl hover:bg-red-500/30 transition text-sm">
-            <i class="fas fa-trash mr-2"></i>Delete Old Session & Try Again
+
+        <!-- DELETE SESSION -->
+        <button
+            id="deleteBtn"
+            onclick="deleteSession()"
+            class="hidden w-full mt-3 bg-red-500/20 border border-red-500/30 text-red-400 font-medium py-2.5 rounded-xl hover:bg-red-500/30 transition text-sm"
+        >
+            <i class="fas fa-trash mr-2"></i>
+            Delete Old Session & Try Again
         </button>
 
-        <div id="codeBox" class="hidden mt-6 p-4 bg-black/60 rounded-xl border border-purple-500/30 text-center">
-            <p class="text-gray-400 text-[10px] tracking-widest mb-2">YOUR PAIR CODE</p>
+
+        <!-- CODE BOX -->
+        <div
+            id="codeBox"
+            class="hidden mt-6 p-4 bg-black/60 rounded-xl border border-purple-500/30 text-center"
+        >
+
+            <p class="text-gray-400 text-[10px] tracking-widest mb-2">
+                YOUR PAIR CODE
+            </p>
+
             <div class="flex items-center justify-center gap-3">
-                <h3 id="pairCode" class="orbitron text-3xl text-white tracking-[0.3em] font-bold">---- ----</h3>
-                <button onclick="copyCode()" class="w-9 h-9 bg-white/10 hover:bg-purple-600 rounded-lg flex items-center justify-center transition"><i id="copyIcon" class="fas fa-copy text-white text-sm"></i></button>
+
+                <h3
+                    id="pairCode"
+                    class="orbitron text-3xl text-white tracking-[0.3em] font-bold"
+                >
+                    ---- ----
+                </h3>
+
+                <button
+                    onclick="copyCode()"
+                    class="w-9 h-9 bg-white/10 hover:bg-purple-600 rounded-lg flex items-center justify-center transition"
+                >
+                    <i
+                        id="copyIcon"
+                        class="fas fa-copy text-white text-sm"
+                    ></i>
+                </button>
+
             </div>
+
+
+            <!-- INSTRUCTIONS -->
             <div class="mt-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2">
-                <p class="text-yellow-300 text-[11px]"><i class="fas fa-info-circle mr-1"></i>WhatsApp > Settings > Linked Devices > Link with phone number</p>
+
+                <p class="text-yellow-300 text-[11px]">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    WhatsApp > Settings > Linked Devices > Link with phone number
+                </p>
+
             </div>
-            <p class="text-yellow-400 text-xs mt-3 font-bold">Expires in <span id="timer">90</span>s - Type it NOW!</p>
-            <div class="w-full bg-white/10 h-1 rounded-full mt-2"><div id="progress" class="h-1 bg-gradient-to-r from-purple-600 to-blue-500 rounded-full transition-all" style="width:100%"></div></div>
+
+
+            <!-- TIMER -->
+            <p class="text-yellow-400 text-xs mt-3 font-bold">
+                Expires in
+                <span id="timer">120</span>s
+                - Type it NOW!
+            </p>
+
+            <div class="w-full bg-white/10 h-1 rounded-full mt-2">
+
+                <div
+                    id="progress"
+                    class="h-1 bg-gradient-to-r from-purple-600 to-blue-500 rounded-full transition-all"
+                    style="width:100%"
+                ></div>
+
+            </div>
+
         </div>
-        <div id="status" class="hidden mt-4 text-center text-sm p-3 rounded-xl"></div>
+
+
+        <!-- STATUS -->
+        <div
+            id="status"
+            class="hidden mt-4 text-center text-sm p-3 rounded-xl"
+        ></div>
+
     </div>
 
+
+    <!-- FOOTER -->
     <div class="text-center mt-10">
-        <p class="text-white text-[13px] tracking-[0.4em] uppercase font-bold" style="text-shadow:0 0 15px rgba(168,85,247,1)">POWERED BY ISSA X ULTRA</p>
-        <p class="text-white/80 text-[13px] mt-3 tracking-wide font-semibold">© 2026 GWIJITECH MD</p>
+
+        <p
+            class="text-white text-[13px] tracking-[0.4em] uppercase font-bold"
+            style="text-shadow:0 0 15px rgba(168,85,247,1)"
+        >
+            POWERED BY ISSA X ULTRA
+        </p>
+
+        <p class="text-white/80 text-[13px] mt-3 tracking-wide font-semibold">
+            © 2026 GWIJITECH MD
+        </p>
+
     </div>
+
 </div>
 
+
 <script>
-function checkFlag(v){
-    const f=document.getElementById('flag');
-    if(v.startsWith('254'))f.innerText='🇰🇪 Kenya';
-    else if(v.startsWith('255'))f.innerText='🇹🇿 Tanzania';
-    else if(v.startsWith('256'))f.innerText='🇺🇬 Uganda';
-    else if(v.startsWith('91'))f.innerText='🇮🇳 India';
-    else if(v.startsWith('234'))f.innerText='🇳🇬 Nigeria';
-    else f.innerText='🌍';
-}
 
-async function loadBots(){
-    try{
-        const r=await fetch('/bots');
-        const d=await r.json();
-        document.getElementById('botCount').innerText=`${d.total_active||0} Active • ${d.total_saved||0} Saved • Online`;
-    }catch{
-        document.getElementById('botCount').innerText='Online • Ready to Pair';
+/* =========================================================
+   COUNTRY FLAG
+========================================================= */
+
+function checkFlag(v) {
+
+    const f = document.getElementById('flag');
+
+    if (v.startsWith('254')) {
+        f.innerText = '🇰🇪 Kenya';
+
+    } else if (v.startsWith('255')) {
+        f.innerText = '🇹🇿 Tanzania';
+
+    } else if (v.startsWith('256')) {
+        f.innerText = '🇺🇬 Uganda';
+
+    } else if (v.startsWith('91')) {
+        f.innerText = '🇮🇳 India';
+
+    } else if (v.startsWith('234')) {
+        f.innerText = '🇳🇬 Nigeria';
+
+    } else {
+        f.innerText = '🌍';
     }
 }
-loadBots()
 
-function copyCode(){
-    const c=document.getElementById('pairCode').innerText;
-    if(!c||c.includes('----'))return;
-    navigator.clipboard.writeText(c.replace(/-/g,'')).then(()=>{
-        const i=document.getElementById('copyIcon');
-        i.className='fas fa-check text-green-400 text-sm';
-        setTimeout(()=>i.className='fas fa-copy text-white text-sm',2000)
-    })
+
+/* =========================================================
+   LOAD BOT COUNT
+========================================================= */
+
+async function loadBots() {
+
+    try {
+
+        const r = await fetch('/bots');
+
+        const d = await r.json();
+
+        document.getElementById('botCount').innerText =
+            `${d.total_active || 0} Active • ${d.total_saved || 0} Saved • Online`;
+
+    } catch {
+
+        document.getElementById('botCount').innerText =
+            'Online • Ready to Pair';
+
+    }
 }
 
-async function deleteSession(){
-    const n=document.getElementById('number').value.replace(/[^0-9]/g,'');
-    if(n.length<10) return alert('Enter number first');
-    if(!confirm(`Delete session for ${n}?`)) return;
-    const s=document.getElementById('status');
-    try{
-        const r=await fetch(`/bots/${n}`, {method:'DELETE'});
-        const d=await r.json();
-        s.className='mt-4 text-center text-sm p-3 rounded-xl bg-green-500/20 text-green-300 border border-green-500/30';
-        s.innerText='✅ '+d.message;
+loadBots();
+
+
+/* =========================================================
+   COPY PAIR CODE
+========================================================= */
+
+function copyCode() {
+
+    const c =
+        document.getElementById('pairCode').innerText;
+
+    if (!c || c.includes('----')) return;
+
+    navigator.clipboard
+        .writeText(c.replace(/-/g, ''))
+        .then(() => {
+
+            const i =
+                document.getElementById('copyIcon');
+
+            i.className =
+                'fas fa-check text-green-400 text-sm';
+
+            setTimeout(() => {
+
+                i.className =
+                    'fas fa-copy text-white text-sm';
+
+            }, 2000);
+
+        });
+
+}
+
+
+/* =========================================================
+   DELETE OLD SESSION
+========================================================= */
+
+async function deleteSession() {
+
+    const n =
+        document
+            .getElementById('number')
+            .value
+            .replace(/[^0-9]/g, '');
+
+    if (n.length < 10) {
+        return alert('Enter number first');
+    }
+
+    if (!confirm(`Delete session for ${n}?`)) {
+        return;
+    }
+
+    const s =
+        document.getElementById('status');
+
+    try {
+
+        const r =
+            await fetch(`/bots/${n}`, {
+                method: 'DELETE'
+            });
+
+        const d =
+            await r.json();
+
+        s.className =
+            'mt-4 text-center text-sm p-3 rounded-xl bg-green-500/20 text-green-300 border border-green-500/30';
+
+        s.innerText =
+            '✅ ' + d.message;
+
         s.classList.remove('hidden');
-        document.getElementById('deleteBtn').classList.add('hidden');
+
+        document
+            .getElementById('deleteBtn')
+            .classList.add('hidden');
+
         loadBots();
-    }catch(e){
-        alert('Delete failed: '+e.message)
+
+    } catch (e) {
+
+        alert(
+            'Delete failed: ' +
+            e.message
+        );
+
     }
+
 }
 
-async function pair(){
-    const input=document.getElementById('number');
-    const n=input.value.replace(/[^0-9]/g,'');
-    const btn=document.getElementById('pairBtn');
-    const bt=document.getElementById('btnText');
-    const cb=document.getElementById('codeBox');
-    const s=document.getElementById('status');
-    const delBtn=document.getElementById('deleteBtn');
 
-    if(n.length<10){
-        s.className='mt-4 text-center text-sm p-3 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30';
-        s.innerText='❌ Enter valid number e.g 2547XXXXXXXX';
-        s.classList.remove('hidden'); return
+/* =========================================================
+   PAIR WHATSAPP
+========================================================= */
+
+async function pair() {
+
+    const input =
+        document.getElementById('number');
+
+    const n =
+        input.value.replace(/[^0-9]/g, '');
+
+    const btn =
+        document.getElementById('pairBtn');
+
+    const bt =
+        document.getElementById('btnText');
+
+    const cb =
+        document.getElementById('codeBox');
+
+    const s =
+        document.getElementById('status');
+
+    const delBtn =
+        document.getElementById('deleteBtn');
+
+
+    /* -----------------------------------------------------
+       VALIDATE NUMBER
+    ----------------------------------------------------- */
+
+    if (n.length < 10) {
+
+        s.className =
+            'mt-4 text-center text-sm p-3 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30';
+
+        s.innerText =
+            '❌ Enter valid number e.g 2547XXXXXXXX';
+
+        s.classList.remove('hidden');
+
+        return;
     }
-    btn.disabled=true; bt.innerText='Generating...'; s.classList.add('hidden'); cb.classList.add('hidden'); delBtn.classList.add('hidden');
 
-    try{
-        const r=await fetch(`/pair?number=${n}`);
-        const d=await r.json();
 
-        if(d.code){
-            document.getElementById('pairCode').innerText=d.code;
+    /* -----------------------------------------------------
+       START LOADING
+    ----------------------------------------------------- */
+
+    btn.disabled = true;
+
+    bt.innerText = 'Generating...';
+
+    s.classList.add('hidden');
+
+    cb.classList.add('hidden');
+
+    delBtn.classList.add('hidden');
+
+
+    try {
+
+        const r =
+            await fetch(`/pair?number=${n}`);
+
+        const d =
+            await r.json();
+
+
+        /* -------------------------------------------------
+           SUCCESS
+        ------------------------------------------------- */
+
+        if (d.code) {
+
+            document
+                .getElementById('pairCode')
+                .innerText = d.code;
+
             cb.classList.remove('hidden');
-            s.className='mt-4 text-center text-sm p-3 rounded-xl bg-green-500/20 text-green-300 border border-green-500/30';
-            s.innerText='✅ Code generated! Enter it in WhatsApp NOW!';
+
+
+            s.className =
+                'mt-4 text-center text-sm p-3 rounded-xl bg-green-500/20 text-green-300 border border-green-500/30';
+
+
+            /* ---------------------------------------------
+               EXISTING CODE
+            --------------------------------------------- */
+
+            if (
+                d.message &&
+                d.message
+                    .toLowerCase()
+                    .includes('use that code')
+            ) {
+
+                s.innerText =
+                    '⚠️ You already have an active code. Use the code above!';
+
+            } else {
+
+                s.innerText =
+                    '✅ Code generated! Enter it in WhatsApp NOW!';
+
+            }
+
+
             s.classList.remove('hidden');
 
-            let t=90;
-            const bar=document.getElementById('progress');
-            const timerEl=document.getElementById('timer');
-            const tm=setInterval(()=>{
-                t--; timerEl.innerText=t; bar.style.width=(t/90*100)+'%';
-                if(t<=0){ clearInterval(tm); cb.classList.add('hidden'); s.innerText='❌ Code expired! Get new one.'; }
-            },1000)
+
+            /* ---------------------------------------------
+               120 SECOND TIMER
+            --------------------------------------------- */
+
+            let t = 120;
+
+            const bar =
+                document.getElementById('progress');
+
+            const timerEl =
+                document.getElementById('timer');
+
+
+            bar.style.width = '100%';
+
+            timerEl.innerText = t;
+
+
+            const tm =
+                setInterval(() => {
+
+                    t--;
+
+                    timerEl.innerText = t;
+
+                    bar.style.width =
+                        (t / 120 * 100) + '%';
+
+
+                    if (t <= 0) {
+
+                        clearInterval(tm);
+
+                        cb.classList.add('hidden');
+
+                        s.innerText =
+                            '❌ Code expired! Get new one.';
+
+                    }
+
+                }, 1000);
+
         } else {
-            throw new Error(d.error||'Failed')
+
+            throw new Error(
+                d.error || 'Failed'
+            );
+
         }
-    }catch(e){
-        s.className='mt-4 text-center text-sm p-3 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30';
-        s.innerText='❌ '+e.message;
+
+
+    } catch (e) {
+
+        s.className =
+            'mt-4 text-center text-sm p-3 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30';
+
+        s.innerText =
+            '❌ ' + e.message;
+
         s.classList.remove('hidden');
-        // Show delete button if error is "Already linked"
-        if(e.message.toLowerCase().includes('linked') || e.message.toLowerCase().includes('delete') || e.message.toLowerCase().includes('exists')){
+
+
+        /* -------------------------------------------------
+           SHOW DELETE BUTTON FOR EXISTING SESSION
+        ------------------------------------------------- */
+
+        const errorText =
+            e.message.toLowerCase();
+
+
+        if (
+            errorText.includes('linked') ||
+            errorText.includes('delete') ||
+            errorText.includes('exists') ||
+            errorText.includes('saved session') ||
+            errorText.includes('already has')
+        ) {
+
             delBtn.classList.remove('hidden');
+
         }
-    }finally{
-        btn.disabled=false; bt.innerText='Get Pair Code'
+
+    } finally {
+
+        btn.disabled = false;
+
+        bt.innerText = 'Get Pair Code';
+
     }
+
 }
+
 </script>
+
 </body>
 </html>

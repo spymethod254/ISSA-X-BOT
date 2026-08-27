@@ -33,13 +33,11 @@ const commands = new Map()
 // =====================================================
 
 function normalizeNumber(number) {
-    return String(number || '').replace(/[^0-9]/g, '')
+    return String(number || '')
+        .replace(/[^0-9]/g, '')
 }
 
-function isOwner(m) {
-
-    const ownerNumber =
-        normalizeNumber(config.ownerNumber)
+function getSenderJid(m) {
 
     const remoteJid =
         m.key?.remoteJid || ''
@@ -47,21 +45,47 @@ function isOwner(m) {
     const participant =
         m.key?.participant || ''
 
-    const sender =
-        m.key?.participant ||
-        m.key?.remoteJid ||
-        ''
+    // Group message → participant is the sender
+    if (remoteJid.endsWith('@g.us') && participant) {
+        return participant
+    }
+
+    // Private message → remoteJid is normally the sender
+    return remoteJid
+}
+
+function getNumberFromJid(jid) {
+
+    return normalizeNumber(
+        String(jid || '')
+            .split('@')[0]
+            .split(':')[0]
+    )
+}
+
+function isOwner(m) {
+
+    const ownerNumber =
+        normalizeNumber(config.ownerNumber)
+
+    const senderJid =
+        getSenderJid(m)
 
     const senderNumber =
-        normalizeNumber(
-            sender.split('@')[0].split(':')[0]
+        getNumberFromJid(senderJid)
+
+    const result =
+        Boolean(
+            ownerNumber &&
+            senderNumber &&
+            senderNumber === ownerNumber
         )
 
-    return (
-        ownerNumber &&
-        senderNumber &&
-        senderNumber === ownerNumber
+    console.log(
+        `🔍 OWNER DEBUG | senderJid=${senderJid} | senderNumber=${senderNumber} | ownerNumber=${ownerNumber} | owner=${result}`
     )
+
+    return result
 }
 
 // === RAILWAY SAFE PATH ===

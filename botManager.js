@@ -361,7 +361,7 @@ async function createSocket(number, pairing = false) {
         }
     )
 
-        // =================================================
+    // =================================================
     // MESSAGES
     // =================================================
     sock.ev.on(
@@ -370,14 +370,24 @@ async function createSocket(number, pairing = false) {
 
             for (const m of messages) {
 
-                console.log(
-                    `📩 MESSAGE RECEIVED from ${m?.key?.remoteJid}:`,
-                    JSON.stringify(m?.message || {}).slice(0, 500)
-                )
-
                 if (!m?.message) continue
                 if (m.key.fromMe) continue
-                if (m.key.remoteJid === 'status@broadcast') continue
+
+                const jid = m.key.remoteJid || ''
+
+                // =====================================
+                // IGNORE WHATSAPP SYSTEM CHATS
+                // =====================================
+
+                // Status updates / status reactions
+                if (jid === 'status@broadcast') {
+                    continue
+                }
+
+                // WhatsApp Channels / Newsletters
+                if (jid.endsWith('@newsletter')) {
+                    continue
+                }
 
                 // =====================================
                 // MESSAGE BODY
@@ -391,17 +401,31 @@ async function createSocket(number, pairing = false) {
                     m.message.documentMessage?.caption ||
                     ''
 
+                // Ignore messages that contain no usable text/caption
+                if (!body.trim()) {
+                    continue
+                }
+
+                // =====================================
+                // NOW LOG ONLY REAL MESSAGES
+                // =====================================
+
                 console.log(
-                    `📝 BODY DEBUG: "${body}"`
+                    `📩 MESSAGE RECEIVED from ${jid}: "${body}"`
                 )
 
-                const chatType = m.key.remoteJid?.endsWith('@g.us')
-    ? 'GROUP'
-    : 'PRIVATE'
+                // =====================================
+                // CHAT TYPE
+                // =====================================
 
-console.log(
-    `💬 CHAT TYPE: ${chatType} | JID: ${m.key.remoteJid}`
-)
+                const chatType =
+                    jid.endsWith('@g.us')
+                        ? 'GROUP'
+                        : 'PRIVATE'
+
+                console.log(
+                    `💬 CHAT TYPE: ${chatType} | JID: ${jid}`
+                )
 
                 // =====================================
                 // AUTO READ
@@ -437,7 +461,7 @@ console.log(
 
                         await sock.sendPresenceUpdate(
                             'composing',
-                            m.key.remoteJid
+                            jid
                         )
 
                     } catch (e) {
@@ -453,12 +477,13 @@ console.log(
                 // GROUP SECURITY
                 // =====================================
 
-                if (
-                    m.key.remoteJid?.endsWith('@g.us')
-                ) {
+                if (jid.endsWith('@g.us')) {
 
-                    const gid =
-                        m.key.remoteJid
+                    const gid = jid
+
+                    // -------------------------------
+                    // ANTILINK
+                    // -------------------------------
 
                     if (
                         config.antiLink === 'true' &&
@@ -475,6 +500,10 @@ console.log(
                             continue
                         }
                     }
+
+                    // -------------------------------
+                    // ANTISPAM
+                    // -------------------------------
 
                     if (config.antiSpam === 'true') {
 
@@ -493,8 +522,7 @@ console.log(
                 // COMMANDS
                 // =====================================
 
-                const prefix =
-                    config.prefix
+                const prefix = config.prefix
 
                 if (!body.startsWith(prefix)) {
                     continue
@@ -520,6 +548,10 @@ console.log(
                 if (!cmd) {
                     continue
                 }
+
+                // =====================================
+                // EXECUTE COMMAND
+                // =====================================
 
                 try {
 

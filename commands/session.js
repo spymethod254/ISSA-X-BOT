@@ -1,25 +1,38 @@
-module.exports = {
-  name: "session",
-  aliases: ["whoami", "mysession"],
+import config from '../config.js'
 
-  async execute(sock, m) {
-    const sessionId = sock.user?.id || "UNKNOWN";
-    const remoteJid = m.key?.remoteJid || "UNKNOWN";
-    const participant = m.key?.participant || "UNKNOWN";
+export default {
+name: 'session',
+aliases: ['whoami', 'mysession'],
+desc: 'Show bot session ID',
 
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("🧪 SESSION ISOLATION TEST");
-    console.log("🤖 SOCKET USER:", sessionId);
-    console.log("📩 REMOTE JID:", remoteJid);
-    console.log("👤 PARTICIPANT:", participant);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+async execute(sock, m) {
 
-    await sock.sendMessage(remoteJid, {
-      text:
-        `🧪 *SESSION TEST*\n\n` +
-        `🤖 Bot session: ${sessionId}\n` +
-        `📩 Chat: ${remoteJid}\n` +
-        `👤 Participant: ${participant}`
-    });
-  }
-};
+    const sessionId =
+        sock.user?.id ||
+        'UNKNOWN'
+
+    const remoteJid =
+        m.key?.remoteJid ||
+        'UNKNOWN'
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('🧪 SESSION ID')
+    console.log('🤖 SOCKET USER:', sessionId)
+    console.log('📩 CHAT:', remoteJid)
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+
+    await sock.sendMessage(
+        remoteJid,
+        {
+            text:
+                `🆔 *SESSION ID*\n\n` +
+                `\`${sessionId}\`\n\n` +
+                `🤖 ${config.botName}`
+        },
+        {
+            quoted: m
+        }
+    )
+}
+
+}

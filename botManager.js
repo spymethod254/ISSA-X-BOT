@@ -63,29 +63,70 @@ function getNumberFromJid(jid) {
     )
 }
 
-function isOwner(m) {
+function isOwner(m, sock) {
 
     const ownerNumber =
         normalizeNumber(config.ownerNumber)
 
+    // -----------------------------------------
+    // SENDER JID
+    // -----------------------------------------
+
     const senderJid =
-        getSenderJid(m)
+        m.key?.participant ||
+        m.key?.remoteJid ||
+        ''
+
+    // -----------------------------------------
+    // SENDER PHONE NUMBER
+    // -----------------------------------------
 
     const senderNumber =
-        getNumberFromJid(senderJid)
-
-    const result =
-        Boolean(
-            ownerNumber &&
-            senderNumber &&
-            senderNumber === ownerNumber
+        normalizeNumber(
+            senderJid
+                .split('@')[0]
+                .split(':')[0]
         )
 
-    console.log(
-        `🔍 OWNER DEBUG | senderJid=${senderJid} | senderNumber=${senderNumber} | ownerNumber=${ownerNumber} | owner=${result}`
-    )
+    // -----------------------------------------
+    // BOT / SOCKET NUMBER
+    // -----------------------------------------
 
-    return result
+    const botNumber =
+        normalizeNumber(
+            sock.user?.id
+                ?.split('@')[0]
+                ?.split(':')[0]
+        )
+
+    // -----------------------------------------
+    // DIRECT OWNER MATCH
+    // -----------------------------------------
+
+    if (
+        ownerNumber &&
+        senderNumber &&
+        senderNumber === ownerNumber
+    ) {
+        return true
+    }
+
+    // -----------------------------------------
+    // PRIVATE CHAT FALLBACK
+    // -----------------------------------------
+
+    const remoteJid =
+        m.key?.remoteJid || ''
+
+    if (
+        !remoteJid.endsWith('@g.us') &&
+        botNumber &&
+        botNumber === ownerNumber
+    ) {
+        return true
+    }
+
+    return false
 }
 
 // === RAILWAY SAFE PATH ===
@@ -615,7 +656,7 @@ async function createSocket(number, pairing = false) {
 
                 try {
 
-                    const owner = isOwner(m)
+                    const owner = isOwner(m, sock)
 
 console.log(
     `👑 OWNER CHECK | owner=${owner} | configured=${config.ownerNumber}`

@@ -28,6 +28,42 @@ const bots = new Map()
 // All commands
 const commands = new Map()
 
+// =====================================================
+// OWNER CHECK
+// =====================================================
+
+function normalizeNumber(number) {
+    return String(number || '').replace(/[^0-9]/g, '')
+}
+
+function isOwner(m) {
+
+    const ownerNumber =
+        normalizeNumber(config.ownerNumber)
+
+    const remoteJid =
+        m.key?.remoteJid || ''
+
+    const participant =
+        m.key?.participant || ''
+
+    const sender =
+        m.key?.participant ||
+        m.key?.remoteJid ||
+        ''
+
+    const senderNumber =
+        normalizeNumber(
+            sender.split('@')[0].split(':')[0]
+        )
+
+    return (
+        ownerNumber &&
+        senderNumber &&
+        senderNumber === ownerNumber
+    )
+}
+
 // === RAILWAY SAFE PATH ===
 const SESSIONS_DIR =
     process.env.SESSIONS_DIR || '/app/sessions'
@@ -555,12 +591,21 @@ async function createSocket(number, pairing = false) {
 
                 try {
 
-                    await cmd.execute(
-                        sock,
-                        m,
-                        args,
-                        config
-                    )
+                    const owner = isOwner(m)
+
+console.log(
+    `👑 OWNER CHECK | owner=${owner} | configured=${config.ownerNumber}`
+)
+
+await cmd.execute(
+    sock,
+    m,
+    args,
+    {
+        ...config,
+        isOwner: owner
+    }
+)
 
                 } catch (e) {
 

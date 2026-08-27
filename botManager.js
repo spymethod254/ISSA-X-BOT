@@ -395,6 +395,14 @@ async function createSocket(number, pairing = false) {
                     `📝 BODY DEBUG: "${body}"`
                 )
 
+                const chatType = m.key.remoteJid?.endsWith('@g.us')
+    ? 'GROUP'
+    : 'PRIVATE'
+
+console.log(
+    `💬 CHAT TYPE: ${chatType} | JID: ${m.key.remoteJid}`
+)
+
                 // =====================================
                 // AUTO READ
                 // =====================================

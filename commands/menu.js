@@ -23,20 +23,23 @@ export default {
 │➥  🔣 Prefix: ${prefix}
 │➥  ⏱️ Uptime: ${uptime}m
 │➥  📦 Commands: ${totalCmds}
-╰───────────────────╯
+╰─────────────────────
 
-╭─── ⌈ *ɢᴇɴᴇʀᴀʟ* ⌋ ╾───╮
+╭─── ⌈ *ɢᴇɴᴇʀᴀʟ* ⌋ ╾────
 │➺ ${prefix}gpp
 │➺ ${prefix}avo
 │➺ ${prefix}viewonce
-╰──────────────╯
-╭───「 *ᴀɪ & ᴄʜᴀᴛ* 」╾──╮
+│➺ ${prefix}pp
+│➺ ${prefix}getpp
+│➺ ${prefix}profile
+╰─────────────────
+╭───「 *ᴀɪ & ᴄʜᴀᴛ* 」╾───
 │➺ ${prefix}ai <question>
 │➺ ${prefix}gpt <text>
 │➺ ${prefix}imagine <prompt>
-╰────────────────╯
+╰───────────────────
 
-╭─────╾「 *ɢʀᴏᴜᴘ* 」───╮
+╭─────╾「 *ɢʀᴏᴜᴘ* 」────
 │➺ ${prefix}tagall [msg]
 │➺ ${prefix}hidetag [msg]
 │➺ ${prefix}kick @user
@@ -46,25 +49,25 @@ export default {
 │➺ ${prefix}link / revoke
 │➺ ${prefix}antilink on/off
 │➺ ${prefix}welcome on/off
-╰─────────────────╯
+╰───────────────────
 
-╭───╾「 *ᴅᴏᴡɴʟᴏᴀᴅᴇʀ* 」╼─╮
+╭───╾「 *ᴅᴏᴡɴʟᴏᴀᴅᴇʀ* 」╼──
 │➺ ${prefix}play <song>
 │➺ ${prefix}ytmp3 <link>
 │➺ ${prefix}ytmp4 <link>
 │➺ ${prefix}tiktok <link>
 │➺ ${prefix}fb <link>
 │➺ ${prefix}ig <link>
-╰──────────────────╯
+╰────────────────────
 
-╭───╾「 *ᴛᴏᴏʟꜱ* 」╼───╮
+╭───╾「 *ᴛᴏᴏʟꜱ* 」╼────
 │➻ ${prefix}sticker
 │➺ ${prefix}toimg
 │➺ ${prefix}ping
 │➺ ${prefix}alive
 │➺ ${prefix}owner
 │➺ ${prefix}calc <expr>
-╰────────────────
+╰──────────────────╯
 
 > *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɪꜱꜱᴀ x ᴜʟᴛʀᴀ*
 `

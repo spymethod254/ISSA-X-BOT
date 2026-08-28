@@ -26,47 +26,59 @@ export default {
 ╰─────────────────────
 
 ╭─── ⌈ *ɢᴇɴᴇʀᴀʟ* ⌋ ╾────
-│➺ ${prefix}gpp
-│➺ ${prefix}avo
-│➺ ${prefix}viewonce
-│➺ ${prefix}pp
-│➺ ${prefix}getpp
-│➺ ${prefix}profile
+│➤ ${prefix}gpp
+│➤ ${prefix}avo
+│➤ ${prefix}viewonce
+│➤ ${prefix}pp
+│➤ ${prefix}getpp
+│➤ ${prefix}profile
+│➤ ${prefix}toviewonce
+│➤ ${prefix}tovv
+│➤ ${prefix}tovo
+│➤ ${prefix}pair
+│➤ ${prefix}gcdesc
+│➤ ${prefix}allvar
+│➤ ${pretix}antidelete on
+│➤ ${prefix}antidelete off
+│➤ ${prefix}antidel on
+│➤ ${prefix}rvv
+│➤ ${prefix}toview
+│➤ ${prefix}vv
 ╰─────────────────
 ╭───「 *ᴀɪ & ᴄʜᴀᴛ* 」╾───
-│➺ ${prefix}ai <question>
-│➺ ${prefix}gpt <text>
-│➺ ${prefix}imagine <prompt>
+│➤ ${prefix}ai <question>
+│➤ ${prefix}gpt <text>
+│➤ ${prefix}imagine <prompt>
 ╰───────────────────
 
 ╭─────╾「 *ɢʀᴏᴜᴘ* 」────
-│➺ ${prefix}tagall [msg]
-│➺ ${prefix}hidetag [msg]
-│➺ ${prefix}kick @user
-│➺ ${prefix}add 255xx
-│➺ ${prefix}promote / demote
-│➺ ${prefix}group open/close
-│➺ ${prefix}link / revoke
-│➺ ${prefix}antilink on/off
-│➺ ${prefix}welcome on/off
+│➤ ${prefix}tagall [msg]
+│➤ ${prefix}hidetag [msg]
+│➤ ${prefix}kick @user
+│➤ ${prefix}add 255xx
+│➤ ${prefix}promote / demote
+│➤ ${prefix}group open/close
+│➤ ${prefix}link / revoke
+│➤ ${prefix}antilink on/off
+│➤ ${prefix}welcome on/off
 ╰───────────────────
 
 ╭───╾「 *ᴅᴏᴡɴʟᴏᴀᴅᴇʀ* 」╼──
-│➺ ${prefix}play <song>
-│➺ ${prefix}ytmp3 <link>
-│➺ ${prefix}ytmp4 <link>
-│➺ ${prefix}tiktok <link>
-│➺ ${prefix}fb <link>
-│➺ ${prefix}ig <link>
+│➤ ${prefix}play <song>
+│➤ ${prefix}ytmp3 <link>
+│➤ ${prefix}ytmp4 <link>
+│➤ ${prefix}tiktok <link>
+│➤ ${prefix}fb <link>
+│➤ ${prefix}ig <link>
 ╰────────────────────
 
 ╭───╾「 *ᴛᴏᴏʟꜱ* 」╼────
-│➻ ${prefix}sticker
-│➺ ${prefix}toimg
-│➺ ${prefix}ping
-│➺ ${prefix}alive
-│➺ ${prefix}owner
-│➺ ${prefix}calc <expr>
+│➤ ${prefix}sticker
+│➤ ${prefix}toimg
+│➤ ${prefix}ping
+│➤ ${prefix}alive
+│➤ ${prefix}owner
+│➤ ${prefix}calc <expr>
 ╰──────────────────╯
 
 > *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɪꜱꜱᴀ x ᴜʟᴛʀᴀ*

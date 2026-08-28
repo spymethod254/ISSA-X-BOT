@@ -33,15 +33,6 @@ export default {
 │➤ ${prefix}getpp
 │➤ ${prefix}profile
 │➤ ${prefix}toviewonce
-│➤ ${prefix}tovv
-│➤ ${prefix}tovo
-│➤ ${prefix}pair
-│➤ ${prefix}gcdesc
-│➤ ${prefix}allvar
-│➤ ${pretix}antidelete on
-│➤ ${prefix}antidelete off
-│➤ ${prefix}antidel on
-│➤ ${prefix}rvv
 │➤ ${prefix}toview
 │➤ ${prefix}vv
 ╰─────────────────
@@ -81,6 +72,15 @@ export default {
 │➤ ${prefix}sticker
 │➤ ${prefix}toimg
 │➤ ${prefix}ping
+│➤ ${prefix}tovv
+│➤ ${prefix}tovo
+│➤ ${prefix}pair
+│➤ ${prefix}gcdesc
+│➤ ${prefix}allvar
+│➤ ${pretix}antidelete
+│➤ ${prefix}antidelete
+│➤ ${prefix}antidel
+│➤ ${prefix}rvv
 │➤ ${prefix}alive
 │➤ ${prefix}owner
 │➤ ${prefix}calc <expr>

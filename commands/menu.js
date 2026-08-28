@@ -12,7 +12,6 @@ export default {
         const uptime = Math.floor(process.uptime() / 60)
         const imageUrl = 'https://files.catbox.moe/o6jrdp.jpg'
 
-        // Accurately get the message sender's JID
         const sender = m.sender || m.key.participant || m.key.remoteJid || sock.user.id
 
         const menuText = `
@@ -24,6 +23,7 @@ export default {
 │➥  ⏱️ Uptime: ${uptime}m
 │➥  📦 Commands: ${totalCmds}
 ╰─────────────────────
+
 
 ╭─── ⌈ *ɢᴇɴᴇʀᴀʟ* ⌋ ╾────
 │➤ ${prefix}gpp
@@ -45,11 +45,14 @@ export default {
 │➤ ${prefix}toview
 │➤ ${prefix}vv
 ╰─────────────────
+
+
 ╭───「 *ᴀɪ & ᴄʜᴀᴛ* 」╾───
 │➤ ${prefix}ai <question>
 │➤ ${prefix}gpt <text>
 │➤ ${prefix}imagine <prompt>
 ╰───────────────────
+
 
 ╭─────╾「 *ɢʀᴏᴜᴘ* 」────
 │➤ ${prefix}tagall [msg]
@@ -63,6 +66,7 @@ export default {
 │➤ ${prefix}welcome on/off
 ╰───────────────────
 
+
 ╭───╾「 *ᴅᴏᴡɴʟᴏᴀᴅᴇʀ* 」╼──
 │➤ ${prefix}play <song>
 │➤ ${prefix}ytmp3 <link>
@@ -71,6 +75,7 @@ export default {
 │➤ ${prefix}fb <link>
 │➤ ${prefix}ig <link>
 ╰────────────────────
+
 
 ╭───╾「 *ᴛᴏᴏʟꜱ* 」╼────
 │➤ ${prefix}sticker

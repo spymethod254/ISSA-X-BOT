@@ -12,51 +12,54 @@ export default {
         const uptime = Math.floor(process.uptime() / 60)
         const imageUrl = 'https://files.catbox.moe/o6jrdp.jpg'
 
+        // Accurately get the message sender's JID
+        const sender = m.sender || m.key.participant || m.key.remoteJid || sock.user.id
+
         const menuText = `
 ╭───「 *${config.botName.toUpperCase()}* 」───
-│  👋 Hello @${pushName}
-│  🤖 Bot: ${config.botName}
-│  👑 Owner: ${config.ownerName}
-│  🔣 Prefix: ${prefix}
-│  ⏱️ Uptime: ${uptime}m
-│  📦 Commands: ${totalCmds}
-╰────────────────
+│➥  👋 Hello @${pushName}
+│➥  🤖 Bot: ${config.botName}
+│➥  👑 Owner: ${config.ownerName}
+│➥  🔣 Prefix: ${prefix}
+│➥  ⏱️ Uptime: ${uptime}m
+│➥  📦 Commands: ${totalCmds}
+╰─────────────────────────────╯
 
-╭───「 *AI & CHAT* 」───
-│ ${prefix}ai <question>
-│ ${prefix}gpt <text>
-│ ${prefix}imagine <prompt>
-╰────────────────
+╭───「 *ᴀɪ & ᴄʜᴀᴛ* 」╾──╮
+│➺ ${prefix}ai <question>
+│➺ ${prefix}gpt <text>
+│➺ ${prefix}imagine <prompt>
+╰────────────────────╯
 
-╭───「 *GROUP* 」───
-│ ${prefix}tagall [msg]
-│ ${prefix}hidetag [msg]
-│ ${prefix}kick @user
-│ ${prefix}add 255xx
-│ ${prefix}promote / demote
-│ ${prefix}group open/close
-│ ${prefix}link / revoke
-│ ${prefix}antilink on/off
-│ ${prefix}welcome on/off
-╰────────────────
+╭─────╾「 *ɢʀᴏᴜᴘ* 」──────╮
+│➺ ${prefix}tagall [msg]
+│➺ ${prefix}hidetag [msg]
+│➺ ${prefix}kick @user
+│➺ ${prefix}add 255xx
+│➺ ${prefix}promote / demote
+│➺ ${prefix}group open/close
+│➺ ${prefix}link / revoke
+│➺ ${prefix}antilink on/off
+│➺ ${prefix}welcome on/off
+╰───────────────────────╯
 
-╭───「 *DOWNLOADER* 」───
-│ ${prefix}play <song>
-│ ${prefix}ytmp3 <link>
-│ ${prefix}ytmp4 <link>
-│ ${prefix}tiktok <link>
-│ ${prefix}fb <link>
-│ ${prefix}ig <link>
-╰────────────────
+╭───╾「 *ᴅᴏᴡɴʟᴏᴀᴅᴇʀ* 」╼─╮
+│➺ ${prefix}play <song>
+│➺ ${prefix}ytmp3 <link>
+│➺ ${prefix}ytmp4 <link>
+│➺ ${prefix}tiktok <link>
+│➺ ${prefix}fb <link>
+│➺ ${prefix}ig <link>
+╰─────────────────────╯
 
-╭───「 *TOOLS* 」───
-│ ${prefix}sticker
-│ ${prefix}toimg
-│ ${prefix}ping
-│ ${prefix}alive
-│ ${prefix}owner
-│ ${prefix}calc <expr>
-╰────────────────
+╭───╾「 *ᴛᴏᴏʟꜱ* 」╼───╮
+│➻ ${prefix}sticker
+│➺ ${prefix}toimg
+│➺ ${prefix}ping
+│➺ ${prefix}alive
+│➺ ${prefix}owner
+│➺ ${prefix}calc <expr>
+╰──────────────────╯
 
 > *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɪꜱꜱᴀ x ᴜʟᴛʀᴀ*
 `
@@ -64,7 +67,7 @@ export default {
         await sock.sendMessage(jid, {
             image: { url: imageUrl },
             caption: menuText,
-            mentions: [m.key.participant || jid]
+            mentions: [sender]
         }, { quoted: m })
     }
 }

@@ -471,10 +471,29 @@ async function createSocket(number, pairing = false) {
 
             for (const m of messages) {
 
-                if (!m?.message) continue
-                if (m.key.fromMe) continue
+    if (!m?.message) continue
 
-                const jid = m.key.remoteJid || ''
+    // =====================================
+    // LOG BOT'S OWN MESSAGES
+    // =====================================
+
+    if (m.key.fromMe) {
+
+        const botBody =
+            m.message.conversation ||
+            m.message.extendedTextMessage?.text ||
+            m.message.imageMessage?.caption ||
+            m.message.videoMessage?.caption ||
+            m.message.documentMessage?.caption ||
+            ''
+
+        console.log(
+            `📤 BOT MESSAGE SENT to ${m.key.remoteJid || 'unknown'}: "${botBody}"`
+        )
+
+        continue
+    }
+
 
                 // =====================================
                 // IGNORE WHATSAPP SYSTEM CHATS

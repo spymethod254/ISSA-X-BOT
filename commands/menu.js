@@ -23,13 +23,13 @@ export default {
 │➥  🔣 Prefix: ${prefix}
 │➥  ⏱️ Uptime: ${uptime}m
 │➥  📦 Commands: ${totalCmds}
-╰─────────────────────────────╯
+╰───────────────────╯
 
 ╭───「 *ᴀɪ & ᴄʜᴀᴛ* 」╾──╮
 │➺ ${prefix}ai <question>
 │➺ ${prefix}gpt <text>
 │➺ ${prefix}imagine <prompt>
-╰────────────────────╯
+╰─────────────────╯
 
 ╭─────╾「 *ɢʀᴏᴜᴘ* 」──────╮
 │➺ ${prefix}tagall [msg]
@@ -41,7 +41,7 @@ export default {
 │➺ ${prefix}link / revoke
 │➺ ${prefix}antilink on/off
 │➺ ${prefix}welcome on/off
-╰───────────────────────╯
+╰──────────────────╯
 
 ╭───╾「 *ᴅᴏᴡɴʟᴏᴀᴅᴇʀ* 」╼─╮
 │➺ ${prefix}play <song>
@@ -50,7 +50,7 @@ export default {
 │➺ ${prefix}tiktok <link>
 │➺ ${prefix}fb <link>
 │➺ ${prefix}ig <link>
-╰─────────────────────╯
+╰──────────────────╯
 
 ╭───╾「 *ᴛᴏᴏʟꜱ* 」╼───╮
 │➻ ${prefix}sticker
@@ -59,7 +59,7 @@ export default {
 │➺ ${prefix}alive
 │➺ ${prefix}owner
 │➺ ${prefix}calc <expr>
-╰──────────────────╯
+╰────────────────
 
 > *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɪꜱꜱᴀ x ᴜʟᴛʀᴀ*
 `

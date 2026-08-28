@@ -64,14 +64,52 @@ function getNumberFromJid(jid) {
 }
 
 function isOwner(m, sock) {
-    const ownerNumber = normalizeNumber(config.ownerNumber)
-    if (!ownerNumber) return false
-    
-    const senderJid = getSenderJid(m)
-    const senderNumber = getNumberFromJid(senderJid)
 
-    return senderNumber === ownerNumber
-}
+    const ownerNumber =
+        normalizeNumber(config.ownerNumber)
+
+    // -----------------------------------------
+    // SENDER JID
+    // -----------------------------------------
+
+    const senderJid =
+        m.key?.participant ||
+        m.key?.remoteJid ||
+        ''
+
+    // -----------------------------------------
+    // SENDER PHONE NUMBER
+    // -----------------------------------------
+
+    const senderNumber =
+        normalizeNumber(
+            senderJid
+                .split('@')[0]
+                .split(':')[0]
+        )
+
+    // -----------------------------------------
+    // BOT / SOCKET NUMBER
+    // -----------------------------------------
+
+    const botNumber =
+        normalizeNumber(
+            sock.user?.id
+                ?.split('@')[0]
+                ?.split(':')[0]
+        )
+
+    // -----------------------------------------
+    // DIRECT OWNER MATCH
+    // -----------------------------------------
+
+    if (
+        ownerNumber &&
+        senderNumber &&
+        senderNumber === ownerNumber
+    ) {
+        return true
+    }
 
     // -----------------------------------------
     // PRIVATE CHAT FALLBACK

@@ -18,14 +18,14 @@ export default {
         const uptimeM = Math.floor((uptimeSec % 3600) / 60)
 
         const pingText = `
-╭───「 *PING* 」───
-│ ⚡ Speed: *${latency}ms*
-│ ⏱️ Uptime: ${uptimeH}h ${uptimeM}m
-│ 🤖 Bot: ${config.botName}
-│ 📡 Server: Railway
-╰────────────────
+╭───「 *ᴘɪɴɢ* 」────
+│➢ ⚡ Speed: *${latency}ms*
+│➢ ⏱️ Uptime: ${uptimeH}h ${uptimeM}m
+│➢ 🤖 Bot: ${config.botName}
+│➢ 📡 Server: Railway
+╰─────────────────
 
-> *POWERED BY ISSA X ULTRA*
+> *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɪꜱꜱᴀ x ᴜʟᴛʀᴀ*
 `
 
         await sock.sendMessage(

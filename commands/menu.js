@@ -25,6 +25,11 @@ export default {
 │➥  📦 Commands: ${totalCmds}
 ╰───────────────────╯
 
+╭─── ⌈ *ɢᴇɴᴇʀᴀʟ* ⌋ ╾───╮
+│➺ ${prefix}gpp
+│➺ ${prefix}avo
+│➺ ${prefix}viewonce
+╰──────────────╯
 ╭───「 *ᴀɪ & ᴄʜᴀᴛ* 」╾──╮
 │➺ ${prefix}ai <question>
 │➺ ${prefix}gpt <text>

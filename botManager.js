@@ -487,6 +487,37 @@ async function createSocket(number, pairing = false) {
         m.message.documentMessage?.caption ||
         ''
 
+// =====================================
+// VIEW ONCE DETECTION
+// =====================================
+
+const viewOnceMessage =
+    m.message.viewOnceMessage ||
+    m.message.viewOnceMessageV2 ||
+    m.message.viewOnceMessageV2Extension
+
+if (viewOnceMessage) {
+
+    console.log(
+        `👁️ VIEW ONCE MESSAGE detected from ${jid}`
+    )
+
+    if (global.autoViewOnce) {
+
+        console.log(
+            `👁️ AUTO VIEW ONCE is ENABLED`
+        )
+
+        console.log(
+            `ℹ️ View Once media detected — handling skipped to preserve WhatsApp's View Once privacy.`
+        )
+    }
+
+    // Don't let a View Once media message
+    // continue into normal text-command processing
+    continue
+}
+
         // =====================================
     // LOG BOT'S OWN MESSAGES (FIXED)
     // =====================================

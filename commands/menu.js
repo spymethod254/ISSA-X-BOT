@@ -77,8 +77,8 @@ export default {
 │➤ ${prefix}pair
 │➤ ${prefix}gcdesc
 │➤ ${prefix}allvar
-│➤ ${pretix}antidelete
-│➤ ${prefix}antidelete
+│➤ ${prefix}antidelete on
+│➤ ${prefix}antidelete off
 │➤ ${prefix}antidel
 │➤ ${prefix}rvv
 │➤ ${prefix}alive

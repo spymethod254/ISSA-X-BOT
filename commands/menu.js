@@ -29,7 +29,7 @@ export default {
 │➺ ${prefix}ai <question>
 │➺ ${prefix}gpt <text>
 │➺ ${prefix}imagine <prompt>
-╰───────────────╯
+╰────────────────╯
 
 ╭─────╾「 *ɢʀᴏᴜᴘ* 」───╮
 │➺ ${prefix}tagall [msg]
@@ -41,7 +41,7 @@ export default {
 │➺ ${prefix}link / revoke
 │➺ ${prefix}antilink on/off
 │➺ ${prefix}welcome on/off
-╰──────────────────╯
+╰─────────────────╯
 
 ╭───╾「 *ᴅᴏᴡɴʟᴏᴀᴅᴇʀ* 」╼─╮
 │➺ ${prefix}play <song>

@@ -64,52 +64,14 @@ function getNumberFromJid(jid) {
 }
 
 function isOwner(m, sock) {
+    const ownerNumber = normalizeNumber(config.ownerNumber)
+    if (!ownerNumber) return false
+    
+    const senderJid = getSenderJid(m)
+    const senderNumber = getNumberFromJid(senderJid)
 
-    const ownerNumber =
-        normalizeNumber(config.ownerNumber)
-
-    // -----------------------------------------
-    // SENDER JID
-    // -----------------------------------------
-
-    const senderJid =
-        m.key?.participant ||
-        m.key?.remoteJid ||
-        ''
-
-    // -----------------------------------------
-    // SENDER PHONE NUMBER
-    // -----------------------------------------
-
-    const senderNumber =
-        normalizeNumber(
-            senderJid
-                .split('@')[0]
-                .split(':')[0]
-        )
-
-    // -----------------------------------------
-    // BOT / SOCKET NUMBER
-    // -----------------------------------------
-
-    const botNumber =
-        normalizeNumber(
-            sock.user?.id
-                ?.split('@')[0]
-                ?.split(':')[0]
-        )
-
-    // -----------------------------------------
-    // DIRECT OWNER MATCH
-    // -----------------------------------------
-
-    if (
-        ownerNumber &&
-        senderNumber &&
-        senderNumber === ownerNumber
-    ) {
-        return true
-    }
+    return senderNumber === ownerNumber
+}
 
     // -----------------------------------------
     // PRIVATE CHAT FALLBACK
@@ -487,19 +449,17 @@ async function createSocket(number, pairing = false) {
         m.message.documentMessage?.caption ||
         ''
 
+        // =====================================
+    // LOG BOT'S OWN MESSAGES (FIXED)
     // =====================================
-    // LOG BOT'S OWN MESSAGES
-    // =====================================
+    const isFromMe = !!m.key.fromMe
 
-    if (m.key.fromMe) {
-
-        if (body.trim()) {
-            console.log(
-                `📤 BOT MESSAGE SENT to ${jid}: "${body}"`
-            )
-        }
-
+    if (isFromMe && !body.startsWith(config.prefix)) {
         continue
+    }
+
+    if (isFromMe && body.trim()) {
+        console.log(`📤 BOT MESSAGE SENT to ${jid}: "${body}"`)
     }
 
     // =====================================

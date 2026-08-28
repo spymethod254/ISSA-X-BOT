@@ -473,79 +473,72 @@ async function createSocket(number, pairing = false) {
 
     if (!m?.message) continue
 
+    const jid = m.key.remoteJid || ''
+
+    // =====================================
+    // MESSAGE BODY
+    // =====================================
+
+    const body =
+        m.message.conversation ||
+        m.message.extendedTextMessage?.text ||
+        m.message.imageMessage?.caption ||
+        m.message.videoMessage?.caption ||
+        m.message.documentMessage?.caption ||
+        ''
+
     // =====================================
     // LOG BOT'S OWN MESSAGES
     // =====================================
 
     if (m.key.fromMe) {
 
-        const botBody =
-            m.message.conversation ||
-            m.message.extendedTextMessage?.text ||
-            m.message.imageMessage?.caption ||
-            m.message.videoMessage?.caption ||
-            m.message.documentMessage?.caption ||
-            ''
-
-        console.log(
-            `📤 BOT MESSAGE SENT to ${m.key.remoteJid || 'unknown'}: "${botBody}"`
-        )
+        if (body.trim()) {
+            console.log(
+                `📤 BOT MESSAGE SENT to ${jid}: "${body}"`
+            )
+        }
 
         continue
     }
 
+    // =====================================
+    // IGNORE WHATSAPP SYSTEM CHATS
+    // =====================================
 
-                // =====================================
-                // IGNORE WHATSAPP SYSTEM CHATS
-                // =====================================
+    if (jid === 'status@broadcast') {
+        continue
+    }
 
-                // Status updates / status reactions
-                if (jid === 'status@broadcast') {
-                    continue
-                }
+    if (jid.endsWith('@newsletter')) {
+        continue
+    }
 
-                // WhatsApp Channels / Newsletters
-                if (jid.endsWith('@newsletter')) {
-                    continue
-                }
+    // Ignore messages that contain no usable text/caption
+    if (!body.trim()) {
+        continue
+    }
 
-                // =====================================
-                // MESSAGE BODY
-                // =====================================
+    // =====================================
+    // NOW LOG ONLY REAL MESSAGES
+    // =====================================
 
-                const body =
-                    m.message.conversation ||
-                    m.message.extendedTextMessage?.text ||
-                    m.message.imageMessage?.caption ||
-                    m.message.videoMessage?.caption ||
-                    m.message.documentMessage?.caption ||
-                    ''
+    console.log(
+        `📩 MESSAGE RECEIVED from ${jid}: "${body}"`
+    )
 
-                // Ignore messages that contain no usable text/caption
-                if (!body.trim()) {
-                    continue
-                }
+    // =====================================
+    // CHAT TYPE
+    // =====================================
 
-                // =====================================
-                // NOW LOG ONLY REAL MESSAGES
-                // =====================================
+    const chatType =
+        jid.endsWith('@g.us')
+            ? 'GROUP'
+            : 'PRIVATE'
 
-                console.log(
-                    `📩 MESSAGE RECEIVED from ${jid}: "${body}"`
-                )
-
-                // =====================================
-                // CHAT TYPE
-                // =====================================
-
-                const chatType =
-                    jid.endsWith('@g.us')
-                        ? 'GROUP'
-                        : 'PRIVATE'
-
-                console.log(
-                    `💬 CHAT TYPE: ${chatType} | JID: ${jid}`
-                )
+    console.log(
+        `💬 CHAT TYPE: ${chatType} | JID: ${jid}`
+    )
 
                 // =====================================
                 // AUTO READ

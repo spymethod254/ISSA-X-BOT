@@ -5,30 +5,74 @@ export async function welcomeHandler(sock) {
         const { id, participants, action } = update
         try {
             const metadata = await sock.groupMetadata(id).catch(()=>null)
-            const groupName = metadata?.subject || 'Group'
+            const groupName = metadata?.subject || 'this group'
+            const groupMembers = metadata?.participants?.length || 0
 
             for(let user of participants) {
                 let pp
                 try { pp = await sock.profilePictureUrl(user, 'image') } catch { pp = null }
+                const mentionTag = `@${user.split('@')[0]}`
+                const footer = `> *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɪꜱꜱᴀ x ᴜʟᴛʀᴀ*`
 
                 if(action === 'add') {
+                    const welcomeText = `
+╭───「 *WELCOME* 」───
+│➥ 👋 Hello ${mentionTag}
+│➥ 🏷️ Group: ${groupName}
+│➥ 👥 Members: ${groupMembers}
+│➥ 🤖 Bot: ${config.botName}
+╰─────────────────────
+
+╭───「 *RULES* 」───
+│➤ No spam / links
+│➤ Respect all members
+│➤ Type ${config.prefix}menu for commands
+╰───────────────────
+
+${footer}
+`
                     await sock.sendMessage(id, {
-                        image: pp? { url: pp } : undefined,
-                        caption: `*WELCOME TO ${groupName}* 🎉\nHello @${user.split('@')[0]}!\n\nBot: ${config.botName}\nOwner: ${config.ownerName}\n\nType ${config.prefix}menu`,
+                        image: pp? { url: pp } : { url: 'https://files.catbox.moe/o6jrdp.jpg' },
+                        caption: welcomeText,
                         mentions: [user]
                     })
                 }
+
                 if(action === 'remove') {
-                    await sock.sendMessage(id, {
-                        text: `*GOODBYE* 👋\n@${user.split('@')[0]} left ${groupName}\nWe will miss you!`,
-                        mentions: [user]
-                    })
+                    const byeText = `
+╭───「 *GOODBYE* 」───
+│➥ 😢 ${mentionTag} left
+│➥ 🏷️ Group: ${groupName}
+│➥ 👥 Now: ${groupMembers} members
+╰─────────────────────
+
+${footer}
+`
+                    await sock.sendMessage(id, { text: byeText, mentions: [user] })
                 }
+
                 if(action === 'promote') {
-                    await sock.sendMessage(id, { text: `🎉 @${user.split('@')[0]} is now admin!`, mentions: [user] })
+                    const promoText = `
+╭───「 *PROMOTED* 」───
+│➥ 🎉 ${mentionTag}
+│➥ 📈 Now Admin in ${groupName}
+╰─────────────────────
+
+${footer}
+`
+                    await sock.sendMessage(id, { text: promoText, mentions: [user] })
                 }
+
                 if(action === 'demote') {
-                    await sock.sendMessage(id, { text: `😅 @${user.split('@')[0]} is no longer admin`, mentions: [user] })
+                    const demoText = `
+╭───「 *DEMOTED* 」───
+│➥ 😅 ${mentionTag}
+│➥ 📉 No longer Admin
+╰─────────────────────
+
+${footer}
+`
+                    await sock.sendMessage(id, { text: demoText, mentions: [user] })
                 }
             }
         } catch(e) { console.log('welcome error', e) }

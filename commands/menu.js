@@ -29,9 +29,9 @@ export default {
 │➺ ${prefix}ai <question>
 │➺ ${prefix}gpt <text>
 │➺ ${prefix}imagine <prompt>
-╰─────────────────╯
+╰───────────────╯
 
-╭─────╾「 *ɢʀᴏᴜᴘ* 」──────╮
+╭─────╾「 *ɢʀᴏᴜᴘ* 」───╮
 │➺ ${prefix}tagall [msg]
 │➺ ${prefix}hidetag [msg]
 │➺ ${prefix}kick @user

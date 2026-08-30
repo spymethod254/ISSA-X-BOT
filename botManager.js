@@ -52,6 +52,21 @@ function isOwner(m, sock) {
     return senderNumber === ownerNumber
 }
 
+// =====================================================
+// DANGEROUS COMMANDS LIST
+// =====================================================
+const DANGEROUS = [
+  'antilink','welcome','antispam','antidelete','autodelete',
+  'kick','add','promote','demote','revoke','link','group','open','close',
+  'tagall','hidetag','setpp','setppgc','setname','setdesc',
+  'ban','unban','warn','resetwarn'
+]
+const OWNER_ONLY = [
+  'presence','autotyping','autorecord','typing','recording',
+  'autostatus','autoview','status','autostatusreact',
+  'restart','shutdown','join','leave','eval','exec'
+]
+
 // === RAILWAY SAFE PATH ===
 const SESSIONS_DIR = process.env.SESSIONS_DIR || '/app/sessions'
 const DATA_DIR = path.join(SESSIONS_DIR, '..', 'data')
@@ -264,16 +279,41 @@ async function createSocket(number, pairing = false) {
             const cmd = commands.get(cmdName)
             if (!cmd) continue
 
+            // --- PERMISSION CHECK ---
+            const owner = isOwner(m, sock)
+            let isAdmin = false
+            if (jid.endsWith('@g.us')) {
+                try {
+                    const meta = await sock.groupMetadata(jid)
+                    const participant = meta.participants.find(p => p.id === (m.key.participant || m.key.remoteJid))
+                    isAdmin = !!participant?.admin
+                } catch {}
+            }
+
+            // Owner only - typing/recording/status
+            if (OWNER_ONLY.includes(cmdName) && !owner) {
+                await sock.sendMessage(jid, { text: '❌ Owner only 😎' }, { quoted: m })
+                continue
+            }
+
+            // Dangerous - need Admin or Owner
+            if (DANGEROUS.includes(cmdName) && !owner && !isAdmin) {
+                await sock.sendMessage(jid, { text: '❌ Admins / Owner only!' }, { quoted: m })
+                continue
+            }
+
             try {
-                const owner = isOwner(m, sock)
-                console.log(`👑 OWNER CHECK | owner=${owner} | configured=${config.ownerNumber}`)
+                console.log(`👑 OWNER CHECK | owner=${owner} | isAdmin=${isAdmin} | cmd=${cmdName} | configured=${config.ownerNumber}`)
                 // extra presence before command executes (looks more real)
                 await autoPresence(sock, jid, { mode: 'random', min: 800, max: 2000 })
-                await cmd.execute(sock, m, args, {...config, isOwner: owner, settings })
+                await cmd.execute(sock, m, args, {...config, isOwner: owner, isAdmin, settings, saveSettings: () => {
+                    try { fs.writeFileSync('/app/sessions/settings.json', JSON.stringify(settings)) } catch {}
+                }})
             } catch (e) {
                 console.log(`❌ Error executing ${cmdName}:`, e)
             }
         }
+
     })
 
         // =================================================

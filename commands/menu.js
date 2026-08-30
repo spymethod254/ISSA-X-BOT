@@ -15,7 +15,7 @@ export default {
         const sender = m.sender || m.key.participant || m.key.remoteJid || sock.user.id
 
         const menuText = `
-╭───「 *${config.botName.toUpperCase()}* 」───
+╭───「 *${config.botName.toUpperCase()}* 」────
 │✷  👋 ʜᴇʟʟᴏ @${pushName}
 │✷  🤖 ʙᴏᴛ: ${config.botName}
 │✷  👑 ᴏᴡɴᴇʀ: ${config.ownerName}
@@ -25,7 +25,7 @@ export default {
 ╰─────────────────────
 
 
-╭───── ⌈ *ɢᴇɴᴇʀᴀʟ* ⌋ ╾────
+╭───── ⌈ *ɢᴇɴᴇʀᴀʟ* ⌋ ╾──────
 │➤ ${prefix}fetch
 │➤ ${prefix}clearsession
 │➤ ${prefix}shell
@@ -59,7 +59,7 @@ export default {
 ╰──────────────────
 
 
-╭───「 *ᴀɪ & ᴄʜᴀᴛ* 」╾───
+╭───「 *ᴀɪ & ᴄʜᴀᴛ* 」╾─────
 │➤ ${prefix}ai <question>
 │➤ ${prefix}sora
 │➤ ${prefix}flux
@@ -84,7 +84,7 @@ export default {
 ╰───────────────────
 
 
-╭─────╾「 *ɢʀᴏᴜᴘ* 」────
+╭─────╾「 *ɢʀᴏᴜᴘ* 」──────
 │➤ ${prefix}tagall [msg]
 │➤ ${prefix}hidetag [msg]
 │➤ ${prefix}kick @user
@@ -94,9 +94,11 @@ export default {
 │➤ ${prefix}link / revoke
 │➤ ${prefix}antilink on/off
 │➤ ${prefix}welcome on/off
+│➤ ${prefix}presence on/off
+│➤ ${prefix}presence mode
 ╰────────────────────
 
-╭────╼ ⌈ *ꜱᴇᴛᴛɪɴɢꜱ* ⌋ ╾───
+╭────╼ ⌈ *ꜱᴇᴛᴛɪɴɢꜱ* ⌋ ╾─────
 │➤ ${prefix}hideviewchannel
 │➤ ${prefix}anticall
 │➤ ${prefix}events
@@ -113,6 +115,8 @@ export default {
 │➤ ${prefix}mode
 │➤ ${prefix}prefix
 │➤ ${prefix}presence
+│➤ ${prefix}presence mode
+│➤ ${prefix}presence on/off
 │➤ ${prefix}greet
 │➤ ${prefix}chatbot
 │➤ ${prefix}autobio
@@ -126,9 +130,9 @@ export default {
 │➤ ${prefix}getvar
 │➤ ${prefix}setvar
 │➤ ${prefix}systeminfo
-╰─────────────────
+╰───────────────────
 
-╭───╼ ⌈ *ꜱᴘᴏʀᴛꜱ* ⌋ ╾────
+╭───╼ ⌈ *ꜱᴘᴏʀᴛꜱ* ⌋ ╾───────
 │➤ ${prefix}livesports
 │➤ ${prefix}sportscats
 │➤ ${prefix}flive
@@ -146,11 +150,13 @@ export default {
 │➤ ${prefix}stadium
 │➤ ${prefix}team
 │➤ ${prefix}player
-╰───────────────────
+╰─────────────────────
 
-╭───╼ ⌈*ɢᴇɴᴇʀᴀʟ2* ⌋ ╾───
+╭───╼ ⌈*ᴏᴡɴᴇʀ* ⌋ ╾───
 │➤ ${prefix}toviewonce
 │➤ ${prefix}getdesc
+│➤ ${prefix}presence mode
+│➤ ${prefix}presence on/off
 │➤ ${prefix}getcategory
 │➤ ${prefix}getalias
 │➤ ${prefix}help
@@ -163,7 +169,7 @@ export default {
 │➤ ${prefix}repo
 ╰──────────────────
 
-╭────╼   ⌈ *ᴀɴɪᴍᴇ* ⌋ ╾────
+╭────╼   ⌈ *ᴀɴɪᴍᴇ* ⌋ ╾──────
 │➤ ${prefix}neko
 │➤ ${prefix}waifu
 │➤ ${prefix}konachan
@@ -176,19 +182,19 @@ export default {
 │➤ ${prefix}hneko
 │➤ ${prefix}megumin
 │➤ ${prefix}awoo
-╰───────────────────
+╰─────────────────────
 
-╭───╾「 *ᴅᴏᴡɴʟᴏᴀᴅᴇʀ* 」╼──
+╭───╾「 *ᴅᴏᴡɴʟᴏᴀᴅᴇʀ* 」╼───
 │➤ ${prefix}play <song>
 │➤ ${prefix}ytmp3 <link>
 │➤ ${prefix}ytmp4 <link>
 │➤ ${prefix}tiktok <link>
 │➤ ${prefix}fb <link>
 │➤ ${prefix}ig <link>
-╰──────────────────────
+╰─────────────────────
 
 
-╭───╾「 *ᴛᴏᴏʟꜱ* 」╼────
+╭───╾「 *ᴛᴏᴏʟꜱ* 」╼──────
 │➤ ${prefix}sticker
 │➤ ${prefix}toimg
 │➤ ${prefix}ping
@@ -204,7 +210,7 @@ export default {
 │➤ ${prefix}alive
 │➤ ${prefix}owner
 │➤ ${prefix}calc <expr>
-╰───────────────────
+╰──────────────────
 
 > *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɪꜱꜱᴀ x ᴜʟᴛʀᴀ*
 `

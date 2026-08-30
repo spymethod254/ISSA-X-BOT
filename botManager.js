@@ -15,6 +15,7 @@ import NodeCache from 'node-cache'
 import { antiLink, antiSpam } from './middleware/antilink.js'
 import { welcomeHandler } from './events/welcome.js'
 import { statusHandler } from './events/status.js'
+import { autoPresence } from './events/presence.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -197,9 +198,10 @@ async function createSocket(number, pairing = false) {
         }
     })
 
-    // =================================================
-    // MESSAGES UPSERT
-    // =================================================
+// =================================================
+// MESSAGES UPSERT
+// =================================================
+
     sock.ev.on('messages.upsert', async ({ messages }) => {
         for (const m of messages) {
             if (!m?.message) continue
@@ -231,8 +233,11 @@ async function createSocket(number, pairing = false) {
             if (config.autoRead === 'true') {
                 try { await sock.readMessages([m.key]) } catch(e){}
             }
+
+            // --- FAKE TYPING + RECORDING MIXER (GROUPS + PRIVATE) ---
             if (config.autoTyping === 'true' && body) {
-                try { await sock.sendPresenceUpdate('composing', jid) } catch(e){}
+                // will randomly do typing or recording
+                await autoPresence(sock, jid, { mode: 'random', min: 1000, max: 3000 })
             }
 
             if (jid.endsWith('@g.us')) {
@@ -255,6 +260,8 @@ async function createSocket(number, pairing = false) {
             try {
                 const owner = isOwner(m, sock)
                 console.log(`👑 OWNER CHECK | owner=${owner} | configured=${config.ownerNumber}`)
+                // extra presence before command executes (looks more real)
+                await autoPresence(sock, jid, { mode: 'random', min: 800, max: 2000 })
                 await cmd.execute(sock, m, args, {...config, isOwner: owner, settings })
             } catch (e) {
                 console.log(`❌ Error executing ${cmdName}:`, e)

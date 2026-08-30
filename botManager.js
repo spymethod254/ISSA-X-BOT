@@ -237,7 +237,8 @@ async function createSocket(number, pairing = false) {
             // --- FAKE TYPING + RECORDING MIXER (GROUPS + PRIVATE) ---
             if (config.autoTyping === 'true' && body) {
                 // will randomly do typing or recording
-                await autoPresence(sock, jid, { mode: 'random', min: 1000, max: 3000 })
+                await autoPresence(sock, jid, settings)
+                
             }
 
             if (jid.endsWith('@g.us')) {

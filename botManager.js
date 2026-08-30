@@ -235,10 +235,16 @@ async function createSocket(number, pairing = false) {
             }
 
             // --- FAKE TYPING + RECORDING MIXER (GROUPS + PRIVATE) ---
-            if (config.autoTyping === 'true' && body) {
-                // will randomly do typing or recording
-                await autoPresence(sock, jid, settings)
-                
+            if (body) {
+                const jSet = settings[jid] || settings['global'] || {}
+                // default ON if not set yet
+                const isPresenceOn = jSet.presence!== false
+                // respect config.autoTyping = true as global master switch
+                const masterOn = config.autoTyping === 'true' || config.autoTyping === true
+
+                if (isPresenceOn && masterOn) {
+                    await autoPresence(sock, jid, settings)
+                }
             }
 
             if (jid.endsWith('@g.us')) {

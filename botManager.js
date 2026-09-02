@@ -62,7 +62,7 @@ const DANGEROUS = [
   'ban','unban','warn','resetwarn'
 ]
 const OWNER_ONLY = [
-  'presence','autotyping','autorecord','typing','recording',
+  'autotyping','autorecord','recording',
   'autostatus','autoview','status','autostatusreact',
   'restart','shutdown','join','leave','eval','exec'
 ]

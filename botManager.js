@@ -56,7 +56,7 @@ function isOwner(m, sock) {
 // DANGEROUS COMMANDS LIST
 // =====================================================
 const DANGEROUS = [
-  'antilink','welcome','antispam','antidelete','autodelete',
+  'welcome','antispam','antidelete','autodelete',
   'kick','add','promote','demote','revoke','link','group','open','close',
   'tagall','hidetag','setpp','setppgc','setname','setdesc',
   'ban','unban','warn','resetwarn'
@@ -145,7 +145,7 @@ async function createSocket(number, pairing = false) {
                 if (fs.existsSync(credsPath)) {
                     await sock.sendMessage(sock.user.id, {
                         image: { url: 'https://files.catbox.moe/o6jrdp.jpg' },
-                        caption: `*ISSA X ULTRA CONNECTED* ✅\n\n*Number:* ${number}\n*Bot:* ${config.botName}\n*Prefix:* ${config.prefix}\n*Mode:* Multi-Session\n\nType *.menu* to start!\n\n*POWERED BY ISSA X ULTRA*`
+                        caption: `*ɪꜱꜱᴀ x ᴜʟᴛʀᴀ ᴄᴏɴɴᴇᴄᴛᴇᴅ* ✅\n\n*Number:* ${number}\n*Bot:* ${config.botName}\n*Prefix:* ${config.prefix}\n*Mode:* Multi-Session\n\nType *.menu* to start!\n\n*ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɪꜱꜱᴀ x ᴜʟᴛʀᴀ*`
                     })
                     await sock.sendMessage(sock.user.id, {
                         document: fs.readFileSync(credsPath),

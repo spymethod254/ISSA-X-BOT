@@ -302,13 +302,52 @@ async function createSocket(number, pairing = false) {
                 continue
             }
 
-            try {
+                        try {
                 console.log(`👑 OWNER CHECK | owner=${owner} | isAdmin=${isAdmin} | cmd=${cmdName} | configured=${config.ownerNumber}`)
-                // extra presence before command executes (looks more real)
                 await autoPresence(sock, jid, { mode: 'random', min: 800, max: 2000 })
+
+                // ====== AUTO VIEW CHANNEL FOR ALL COMMANDS ======
+                const originalSendMessage = sock.sendMessage.bind(sock)
+                let channelMeta = null
+                try {
+                    const meta = await sock.newsletterMetadata("invite", "0029Vb8TKun8KMqsPz38Li38")
+                    channelMeta = { jid: meta.id, name: meta.name }
+                } catch {
+                    channelMeta = { jid: '120363362220978793@newsletter', name: 'ISSA X ULTRA' }
+                }
+
+                sock.sendMessage = async (targetJid, content, options) => {
+                    // only for text/image/video with text
+                    if (content.text || content.caption) {
+                        const more = String.fromCharCode(8206).repeat(4001)
+                        content.contextInfo = {
+                            ...(content.contextInfo || {}),
+                            isForwarded: true,
+                            forwardingScore: 999,
+                            forwardedNewsletterMessageInfo: {
+                                newsletterJid: channelMeta.jid,
+                                newsletterName: channelMeta.name,
+                                serverMessageId: 145
+                            }
+                        }
+                        if (content.text && !content.text.includes(more.slice(0,10))) {
+                            // don't double add readmore if already there
+                            if (content.text.length > 100) {
+                                content.text = content.text + more
+                            }
+                        }
+                    }
+                    return originalSendMessage(targetJid, content, options)
+                }
+                // ====== END AUTO VIEW CHANNEL ======
+
                 await cmd.execute(sock, m, args, {...config, isOwner: owner, isAdmin, settings, saveSettings: () => {
                     try { fs.writeFileSync('/app/sessions/settings.json', JSON.stringify(settings)) } catch {}
                 }})
+
+                // restore original after command
+                sock.sendMessage = originalSendMessage
+
             } catch (e) {
                 console.log(`❌ Error executing ${cmdName}:`, e)
             }

@@ -313,7 +313,7 @@ async function createSocket(number, pairing = false) {
                     const meta = await sock.newsletterMetadata("invite", "0029Vb8TKun8KMqsPz38Li38")
                     channelMeta = { jid: meta.id, name: meta.name }
                 } catch {
-                    channelMeta = { jid: '120363362220978793@newsletter', name: 'ISSA X ULTRA' }
+                    channelMeta = { jid: '120363408202826782@newsletter', name: 'ISSA X ULTRA' }
                 }
 
                 sock.sendMessage = async (targetJid, content, options) => {
